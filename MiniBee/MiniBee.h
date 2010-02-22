@@ -7,6 +7,15 @@
 #include <WProgram.h>
 #include "../Wire/Wire.h"
 
+enum MiniBeePinConfig { 
+  NotUsed,
+  DigitalIn, DigitalOut,
+  AnalogIn, AnalogOut, AnalogIn10bit, 
+  SHTClock, SHTData, 
+  TWIClock, TWIData,
+  Ping
+}
+
 extern "C" {
 	void PCINT0_vect(void) __attribute__ ((signal));
 	void USART_RX_vect(void) __attribute__ ((signal));
@@ -27,6 +36,10 @@ class MiniBee {
 
 		void begin(int); //init function
 		void configure(void);	//configure from eeprom settings
+
+		void sendSerialNumber(void);
+		void waitForConfig(void); // waits for the configuration message
+
 		uint8_t getId(void);
 		
 		//twi
@@ -65,7 +78,7 @@ class MiniBee {
 		void SerialEvent(void);
 	
 	private:
-		#define CONFIG_BYTES 4
+		#define CONFIG_BYTES 22
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
 		#define AT_ERROR 407
@@ -81,8 +94,9 @@ class MiniBee {
 		#define S_ANN 'A'
 		#define S_QUIT 'Q'
 		#define S_ID 'I'
-		#define S_FULL 'a'
-		#define S_LIGHT 'l'
+		#define S_CONFIG 'C'
+// 		#define S_FULL 'a'
+// 		#define S_LIGHT 'l'
 		
 		//node message types
 		#define N_DATA 'd'
@@ -93,12 +107,21 @@ class MiniBee {
 		uint8_t byte_index;
 		uint8_t escaping;
 		uint8_t id;
+		uint8_t config_id;
 		uint8_t prev_msg;
 		char incoming;
 		char msg_type;
 		char *serial;
 		char *dest_addr;
 		char *message;
+
+		int msgInterval;
+		int samplesPerMsg;
+		uint8_t msg_id_send;
+
+		boolean shtOn;
+		boolean twiOn;
+		boolean pingOn;
 		
 		//at commands
 		void atSend(char *);
@@ -106,16 +129,32 @@ class MiniBee {
 		int atGetStatus(void);
 		
 		//msg
-		void routeMsg(char, char*);
+		boolean checkNodeMsg( uint8_t nid, uint8_t mid );
+		boolean checkMsg( uint8_t mid );
+		void routeMsg(char, char*, uint8_t);
 		void slip(char);
 		
 		//config 
 		char *config; //array of pointers for all the config bytes
-		int sht_pins[2];	//scl, sda
-		int ping_pins[4];	//ping pins
+		int sht_pins[2];	//scl, sda  clock, data
+		int ping_pin;	//ping pins
 		void writeConfig(char *);
 		void readConfig(void);
 		
+		boolean analog_in[8]; // sets whether analog in on 
+		boolean analog_precision[8]; // sets whether analog 10 bit precision is on or not
+
+		boolean pwm_on[6]; // sets whether pwm pin is on or not
+		uint8_t pwm_pins [] = { 3,5,6, 8,9,10 };
+		int pwm_values[] = {0,0,0, 0,0,0};
+		
+		boolean digital_out[19]; // sets whether digital out on
+		int digital_values[19];
+
+		boolean digital_in[19]; // sets whether digital in on
+		
+		char *data;
+
 		//listener functions
 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
 		friend void PCINT0_vect(void);	//interrupt vector
@@ -129,4 +168,3 @@ class MiniBee {
 extern MiniBee Bee;	
 
 #endif	
-	

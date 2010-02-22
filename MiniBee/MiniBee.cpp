@@ -1,7 +1,24 @@
 #include "MiniBee.h"
 
 MiniBee::MiniBee() {
+  
+	shtOn = false;
+	twiOn = false;
 	prev_msg = 0;
+	
+	for ( i = 0; i<8; i++ ){
+	    analog_precision[i] = false; // false is 8bit, true is 10bit
+	    analog_in[i] = false;
+	}
+	for ( i = 0; i<19; i++ ){
+	    digital_in[i] = false;
+	    digital_out[i] = false;
+	    digital_values[i] = 0;
+	}
+	for ( i=0; i<6; i++ ){
+	    pwm_on[i] = false;
+	    pwm_values[i] = 0;
+	}
 
 	//populate whatever xBee properties we'll need.
 	atEnter();
@@ -25,7 +42,7 @@ void MiniBee::begin(int baud_rate) {
 	delay(200);
   	pinMode(XBEE_SLEEP_PIN, OUTPUT);
   	digitalWrite(XBEE_SLEEP_PIN, 0);
-	delay(2500);
+	delay(500);
 }
 
 //**** Xbee AT Commands ****//
@@ -106,7 +123,7 @@ void MiniBee::slip(char c) {
 void MiniBee::read() {
 	incoming = Serial.read();
  	if(escaping) {	//escape set
-		if((incoming == ESC_CHAR) || (incoming == DEL_CHAR)) {	//escape to integer
+		if((incoming == ESC_CHAR)  || (incoming == DEL_CHAR) || (incoming == CR)) {	//escape to integer
 			message[byte_index] = incoming;
 			byte_index++;
 		} else {	//escape to char
@@ -117,7 +134,7 @@ void MiniBee::read() {
 		if(incoming == ESC_CHAR) {
 			escaping = true;
 		} else if(incoming == DEL_CHAR) {	//end of msg
-			routeMsg(msg_type, message);	//route completed message
+			routeMsg(msg_type, message, byte_index);	//route completed message
 			byte_index = 0;	//reset buffer index
 		} else {
 			message[byte_index] = incoming; 
@@ -126,39 +143,148 @@ void MiniBee::read() {
 	}
 }
 
-void MiniBee::routeMsg(char type, char *msg) {
-	//check if the message is for this node and that it is a new one
-	if(msg[0] == id && msg[1] < (prev_msg%256)) {
-		prev_msg++;	//increment previous message counter
-		switch(type) {
-			case S_ANN:
-				configure();
-				break;
-			case S_QUIT:
-				//do something to stop doing anything
-				break;
-			case S_ID:
-				char ser[8];
-				for(i = 0;i < 8;i++) ser[i] = msg[i+2];
-				if(strcmp(ser, serial) == 0) writeConfig(msg);
-				break;
-			case S_PWM:
-				break;
-			case S_DIGI:
-				break;
-			case S_FULL:
-				break;
-			case S_LIGHT:
-				break;
-			default:
-				break;
-		}	
+boolean MiniBee::checkNodeMsg( uint8_t nid, uint8_t mid ){
+	boolean res = ( (nid == id)  && ( mid != prev_msg) );
+	prev_msg = mid;
+	return res;
+}
+
+boolean MiniBee::checkMsg( uint8_t mid ){
+	boolean res = ( mid != prev_msg);
+	prev_msg = mid;
+	return res;
+}
+
+void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
+	// these messages do not have a 
+	switch(type) {
+		case S_ANN:
+			sendSerialNumber();
+// 			configure();
+			break;
+		case S_QUIT:
+			//do something to stop doing anything
+			break;
+		case S_ID:
+			// check for msg ID
+			if ( checkMsg( msg[0] ){
+			  char ser[8];
+			  for(i = 0;i < 8;i++){ ser[i] = msg[i+1]; }
+			  if(strcmp(ser, serial) == 0){
+			      id = msg[9];	//writeConfig(msg);
+			  }
+			  if ( size == 11 ){
+			      config_id = msg[10];
+			      waitForConfig();
+			  } else if ( size == 10 ) {
+			      readConfig();
+			  }
+			}
+			break;
+		case S_CONFIG:
+		      // check if right config_id:
+		      if ( msg[0] == config_id ){
+			writeConfig( msg );
+		      }
+		case S_PWM:
+			if ( checkNodeMsg( msg[0], msg[1] ) ){
+			    for( i=0; i<6; i++){
+				if ( pwm_on[i] ){
+				    pwm_values[i] = msg[2+i];
+				}
+			    }
+			    setPWM();
+			}
+			break;
+		case S_DIGI:
+			if ( checkNodeMsg( msg[0], msg[1] ) ){
+			    for( i=0; i< (size-2); i++){
+				if ( digital_on[i] ){
+				    digital_values[i] = msg[2+i];
+				}
+			    }
+			    setDigital();
+			}
+			break;
+		default:
+			break;
+		}
 	}
+}
+
+void MiniBee::setPWM(){
+	for( i=0; i<6; i++){
+	  if ( pwm_on[i] ){
+	    analogWrite( pwm_pins[i], pwm_values[i] );
+	  }
+	} 
+}
+
+void MiniBee::setDigital(){
+	for( i=0; i<19; i++){
+	  if ( digital_on[i] ){
+	    digitalWrite( i, digital_values[i] );
+	  }
+	} 
+}
+
+void dataFromInt( int output, int offset ){
+  data[offset]   = byte(output/256);
+  data[offset+1] = byte(output%256);
+}
+
+void MiniBee::readSensors( uint8_t db ){
+    int value;
+    // read analog sensors
+    for ( i = 0; i < 8; i++ ){
+      if ( analog_in[i] ){
+	    if ( analog_precision[i] ){
+		value = analogRead(i);
+		dataFromInt( value );
+		db += 2;
+	    } else {
+		data[db] = analogRead(i)/4;
+		db++;      
+	    }
+      }
+    }
+    // read digital sensors
+    for ( i = 0; i < 19; i++ ){
+      if ( digital_in[i] ){
+	// this can be done way more clever by shifting the results into 3 bytes
+	data[db] = digitalRead(i);
+	db++;
+      }
+    }
+    // read I2C/two wire interface accelero
+    if ( twiOn ){
+      
+    }
+    
+    // read SHT sensor
+    if ( shtOn ){
+      
+    }
+    
+    // read ultrasound sensor
+    if ( pingOn ){
+      
+    }
 }
 
 uint8_t MiniBee::getId(void) { 
 	return config[0]; 
 }
+
+void MiniBee::sendSerialNumber(void){
+	send(N_SER, serial);
+}  
+
+void MiniBee::waitForConfig(void){
+	long timeout = millis();
+	while(millis() < timeout + 30000) read();
+	// waits 30 seconds for a configuration
+}  
 
 void MiniBee::configure(void) {
 	send(N_SER, serial);
@@ -168,17 +294,88 @@ void MiniBee::configure(void) {
 }
 
 void MiniBee::writeConfig(char *msg) {
-	for(i = 0;i < CONFIG_BYTES;i++) eeprom_write_byte((uint8_t *) i, msg[i+11]);	//write byte to memory
+// 	eeprom_write_byte((uint8_t *) i, id ); // writing id
+	for(i = 0;i < CONFIG_BYTES;i++){
+	    eeprom_write_byte((uint8_t *) i, msg[i+1]);
+	    //write byte to memory
+	}
 }
 
-void MiniBee::readConfig(void) {	
+void MiniBee::readConfig(void) {
+	int datasize = 0;
+  
 	for(i = 0;i < CONFIG_BYTES;i++) config[i] = eeprom_read_byte((uint8_t *) i);
 	
-}	
+	msgInterval = config[0]*256 + config[1];
+	samplesPerMsg = config[2];
+	for(i = 3;i < CONFIG_BYTES;i++){
+	    switch( config[i] ){
+	      case AnalogIn10bit:
+		if ( i > 13 ){
+		    analog_precision[i-14] = true;
+		    analog_in[i-14] = true;
+		    pinMode( i, INPUT );
+		    datasize += 2;
+		}
+		break;
+	      case AnalogIn:
+		if ( i > 13 ){
+		    analog_precision[i-14] = false;
+		    analog_in[i-14] = true;
+		    pinMode( i, INPUT );
+		    datasize += 1;
+		}
+		break;
+	      case DigitalIn:
+		pinMode( i, INPUT );
+		digital_in[i-3] = true;
+		datasize += 1;
+		break;
+	      case AnalogOut:
+		for ( int j=0; j < 6; j++ ){
+		    if ( pwm_pins[j] == i ){
+			pinMode( i, OUTPUT );
+			pwm_on[j] = true;
+		    }
+		}
+		break;
+	      case DigitalOut:
+		digital_out[i-3] = true;
+		pinMode( i, OUTPUT );
+		break;
+	      case SHTClock:
+		sht_pins[0] = i;
+		shtOn = true;
+		pinMode( i, OUTPUT );
+		break;
+	      case SHTData:
+		sht_pins[1] = i;
+		shtOn = true;
+		pinMode( i, OUTPUT );
+		datasize += 4;
+		break;
+	      case TWIClock:
+	      case TWIData:
+		twiOn = true;
+		datasize += 3;
+		break;
+	      case Ping:
+		pingOn = true;
+		ping_pin = i;
+		datasize += 2;
+		break;
+	      case NotUsed:
+		break;
+	    }
+	}
+	
+	datasize = datasize * samplesPerMsg;
+	data = (char*)malloc(sizeof(char) * datasize);
+}
 
 //TWI
 boolean MiniBee::getFlagTWI(void) { 
-	if(config[1] > 0) return true; 
+	if(config[3] > 0) return true; 
 	else return false;
 } 
 
@@ -226,8 +423,8 @@ void MiniBee::setupSHT(int* pins) {
 	//pins[0] is scl pins[1] is sda
 	*sht_pins = *pins;
 	pinMode(sht_pins[0], OUTPUT);
-    digitalWrite(sht_pins[0], HIGH);     
-    pinMode(sht_pins[1], OUTPUT);   
+	digitalWrite(sht_pins[0], HIGH);     
+	pinMode(sht_pins[1], OUTPUT);   
 	startSHT();
 }
 
@@ -338,31 +535,31 @@ boolean MiniBee::getFlagPing(void) {
 } 
 
 int* MiniBee::getPinPing(void) { 
-	return ping_pins; 
+	return ping_pin; 
 }
 
-void MiniBee::setupPing(int *pins) {
-	*ping_pins = *pins;	//ping pins = ping pins
-	//no Ping setup
-}	
+// void MiniBee::setupPing(int *pins) {
+// 	*ping_pins = *pins;	//ping pins = ping pins
+// 	//no Ping setup
+// }	
 
 int MiniBee::readPing(void) {
 	long ping;
 
 	// The Devantech US device is triggered by a HIGH pulse of 10 or more microseconds.
 	// We give a short LOW pulse beforehand to ensure a clean HIGH pulse.
-	pinMode(ping_pins[2], OUTPUT);
-	digitalWrite(ping_pins[2], LOW);
+	pinMode(ping_pin, OUTPUT);
+	digitalWrite(ping_pin, LOW);
 	delayMicroseconds(2);
-	digitalWrite(ping_pins[2], HIGH);
+	digitalWrite(ping_pin, HIGH);
 	delayMicroseconds(11);
-	digitalWrite(ping_pins[2], LOW);
+	digitalWrite(ping_pin, LOW);
 
 	// The same pin is used to read the signal from the Devantech Ultrasound device: a HIGH
 	// pulse whose duration is the time (in microseconds) from the sending
 	// of the ping to the reception of its echo off of an object.
-	pinMode(ping_pins[2], INPUT);
-	ping = pulseIn(ping_pins[2], HIGH);
+	pinMode(ping_pin, INPUT);
+	ping = pulseIn(ping_pin, HIGH);
  
 	//max value is 30000 so easily fits in an int
 	return int(ping);
