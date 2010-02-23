@@ -1,0 +1,120 @@
+\documentclass[letterpaper,10pt]{article}
+\usepackage[utf8x]{inputenc}
+
+%opening
+\title{Communication client-datanetwork-minibees}
+\author{Marije Baalman}
+
+\begin{document}
+
+\maketitle
+
+% \begin{abstract}
+
+% \end{abstract}
+
+\section{Communication between DataNetwork host and MiniBee nodes}
+
+Several stages of sending data to the MiniBee:
+
+\begin{enumerate}
+ \item Client to DataNode
+ \item DataNode to MiniBee
+ \item Host (server) to node
+\end{enumerate}
+
+On one hand mapping of DataNode to MiniBee node, host should be repeating the sending of the data at a regular interval, so that messages are still arriving, even if they may be lost depending on the network density.
+
+So, the MiniBee firmware has to check for:
+\begin{itemize}
+ \item type of message (pulse width modulation, or digital out)
+ \item node ID (is this for me?)
+ \item msg ID (did I already parse this message?)
+\end{itemize}
+
+
+\begin{table}
+ 
+\begin{center}
+\begin{tabular}{llll}
+description & type & data & sender\\
+\hline
+PWM & 'P' & node ID + msg ID + 6 values & server\\
+Digital out & 'D' & node ID + msg ID + 19 values & server\\
+Data & 'd' & node ID + msg ID + N values & node\\
+\hline
+Announce & 'A' &  & server \\
+Quit & 'Q' &  & server \\
+Serial number & 's' & Serial High (SH) + Serial Low (SL) & node\\
+ID assignment & 'I' & msg ID + SH + SL + node ID + (*config ID*) & server \\
+Configuration & 'C' & config ID + configuration bytes & server \\
+\hline
+"full package" (Chronotopia) & 'a' & 6 * 6 + 3 values & server \\
+"light" (PWM up to now)      & 'l' & node ID + 6 values & server
+\end{tabular}
+\end{center}
+\caption{Message protocol between host and MiniBee nodes. Type is preceded by the escape character (92), and messages are delimited with the delimiter character (10). Furthermore character 13 needs to be escaped as well. General convention: server message in capital, node message small.}
+\end{table}
+
+
+\section{Wireless configuration - startup sequence of MiniBee nodes}
+
+\begin{enumerate}
+ \item Wake up XBee
+ \item Read SH and SL
+ \item Send SH and SL to coordinator (msgtype 's')
+ \item Coordinator sends node ID (msgtype 'I') with an optional configuration ID. If so, the board will receive a new configuration.
+%  \item \textit{if new config} Change MY to given destination address.
+%  \item \textit{if new config} Send coordinator a message of having changed to destination address.
+ \item \textit{if new config} Wait for configuration message.
+ \item \textit{if new config} Write new config to EEPROM and confirm received configuration message.
+ \item Load config from EEPROM.
+ \item Start sending data, or wait for receiving data (depending on config).
+\end{enumerate}
+
+\textbf{NOTE:} Configuration message can go to several MiniBees at the same time, if they share the same configuration. That's why we set the destination address, so that only those MiniBees will receive the message. We'll do some magic on the host's side to determine whether MiniBees have the same config or not.
+
+\textbf{NOTE:} When the host comes up, it should send an announce message, so that all MiniBees can announce their presence (basically do the startup cycle from point 3 onwards). I've added the destination address as an optional parameter, so the MiniBees could switch to that destination address (we'll have to discuss whether that is useful or not; maybe it's not). Similarly, the host could send a Quit message to tell the MiniBees that they can stop doing what they do... this may or may not be useful, since some projects might just want to run MiniBees by themselves...
+
+\subsection{Configuration message}
+
+\begin{center}
+\begin{tabular}{llll}
+msg time interval & 2 bytes (interval in ms) & & \\
+samples per message & 1 byte & & \\
+19 bytes pin configuration& & \\
+\end{tabular}
+\end{center}
+
+\begin{verbatim}
+enum MiniBeePinConfig { 
+  NotUsed,
+  DigitalIn, DigitalOut,
+  AnalogIn, AnalogOut, AnalogIn10bit, 
+  SHTClock, SHTData, 
+  TWIClock, TWIData,
+  Ping
+}
+\end{verbatim} 
+% \begin{center}
+% \begin{tabular}{llll}
+% msg time interval & 2 bytes (interval in ms) & & \\
+% \hline
+% INPUT & & & \\
+% \hline
+% analog pins & 1 byte on/off & 1 byte number of pins (N) & N bytes samples/message \\
+% digital pins & 2 bytes on/off & 1 byte number of pins (N) & N bytes samples/message\\
+% I2C & how many addresses (N) & N x address & N x samples/message\\
+% SHT & 1 byte on/off & pin clock, pin data & samples/message\\
+% Ping (Ultrasound) & on/off & ping pin & ×\\
+% \hline
+% OUTPUT & & & \\
+% \hline
+% Digital & 2 bytes on/off &  & \\
+% PWM & 1 byte on/off &  & \\
+% \end{tabular}
+% \end{center}
+% 
+% Note: analog pins 10 bit or 8 bit results?
+
+\end{document}
