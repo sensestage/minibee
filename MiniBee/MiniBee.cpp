@@ -6,6 +6,9 @@ MiniBee::MiniBee() {
 	twiOn = false;
 	pingOn = false;
 	prev_msg = 0;
+<<<<<<< HEAD
+		
+=======
 	curSample = 0;
 	msg_id_send = 0;
 	
@@ -23,6 +26,7 @@ MiniBee::MiniBee() {
 	    pwm_values[i] = 0;
 	}
 
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 	//populate whatever xBee properties we'll need.
 	atEnter();
 	serial = strcat(atGet("SH"), atGet("SL"));
@@ -40,7 +44,7 @@ MiniBee Bee = MiniBee();
 
 void MiniBee::begin(int baud_rate) {
 	//config array, this should move to the firmware or something?
-	//id, twi, sht, ping, sht pins, 
+	//id, twi, sht, ping, sht pins, ping pin 
 	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
 	
 	Serial.begin(baud_rate);
@@ -53,6 +57,8 @@ void MiniBee::begin(int baud_rate) {
 	status = WAITINGHOST;
 }
 
+<<<<<<< HEAD
+=======
 
 void MiniBee::doLoopStep(void){
   // read any new data from XBee:
@@ -148,6 +154,7 @@ char* MiniBee::atGet(char *c) {
 
 //**** END AT COMMAND STUFF ****//
 
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 void MiniBee::send(char type, char *p) {
 	slip(ESC_CHAR);
 	slip(type);
@@ -158,6 +165,10 @@ void MiniBee::send(char type, char *p) {
 void MiniBee::slip(char c) {
 	if((c == ESC_CHAR) || (c == DEL_CHAR) || (c == CR)) Serial.print(ESC_CHAR, BYTE);
 	else Serial.print(c, BYTE);
+}
+
+int MiniBee::available(void) {
+	return Serial.available();
 }
 
 void MiniBee::read() {
@@ -183,6 +194,52 @@ void MiniBee::read() {
 	}
 }
 
+<<<<<<< HEAD
+void MiniBee::routeMsg(char type, char *msg) {
+	switch(type) {
+		case S_ANN:
+			server_status = true;
+			configure();
+			break;
+		case S_QUIT:
+			server_status = false;
+			break;
+		case S_ID:
+			//msgID - SH - SL - node ID - config ID
+			if(msg[0] != prev_msg) {
+				prev_msg = msg[0];
+				char ser[8];	//check the serial to make sure we're being addressed
+				for(i = 0;i < 8;i++) ser[i] = msg[i+1];
+				if(strcmp(ser, serial) == 0) {
+					id = msg[9];
+					config_id = msg[10];
+				}
+			}
+			break;
+		case S_PWM:
+			//nodeID - msgID - 6 bytes 
+			if((msg[0] == id) && (msg[1] != prev_msg)) {
+				prev_msg = msg[1];
+				pwmMessage();
+			}
+			break;
+		case S_DIGI:
+			//nodeID - msgID - 11 bits?
+			if((msg[0] == id) && (msg[1] != prev_msg)) {
+				prev_msg = msg[1];
+				//digitalMessage();
+			}
+			break;
+		case S_FULL:
+			break;
+		case S_LIGHT:
+			//nodeID - 6 bytes
+			pwmMessage();
+			break;
+		default:
+			break;
+	}	
+=======
 boolean MiniBee::checkNodeMsg( uint8_t nid, uint8_t mid ){
 	boolean res = ( (nid == id)  && ( mid != prev_msg) );
 	prev_msg = mid;
@@ -338,6 +395,7 @@ void MiniBee::sendData(void){
 
 uint8_t MiniBee::getId(void) { 
 	return id;
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 }
 
 void MiniBee::sendSerialNumber(void){
@@ -358,11 +416,16 @@ void MiniBee::waitForConfig(void){
 // }
 
 void MiniBee::writeConfig(char *msg) {
+<<<<<<< HEAD
+	//write the config to eeprom, skipping the first n bytes
+	for(i = 0;i < CONFIG_BYTES;i++) eeprom_write_byte((uint8_t *) i, msg[i+1]);
+=======
 // 	eeprom_write_byte((uint8_t *) i, id ); // writing id
 	for(i = 0;i < CONFIG_BYTES;i++){
 	    eeprom_write_byte((uint8_t *) i, msg[i+1]);
 	    //write byte to memory
 	}
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 }
 
 void MiniBee::readConfig(void) {
@@ -370,6 +433,36 @@ void MiniBee::readConfig(void) {
   
 	for(i = 0;i < CONFIG_BYTES;i++) config[i] = eeprom_read_byte((uint8_t *) i);
 	
+<<<<<<< HEAD
+}
+
+bool MiniBee::serverOn(void) {
+	return server_status;
+}
+
+uint8_t MiniBee::getId(void) { 
+	return config[0]; 
+}
+
+//Write messages
+void MiniBee::digitalMessage(void) {
+	/*for(i = 0;i < 11;i++) {
+		if(digitalPins[i][0] == DIGITAL_OUT) { // pin is in digital out mode
+			//write value to pin, skipping nodeID and msgID
+			digitalWrite(digitalPins[i][0], message[i+2]); 
+		}
+	}*/
+}
+
+void MiniBee::pwmMessage(void) {
+	/*for(i = 0;i < 6;i++) {
+		if(digitalModes[pwmDigIDs[i]] == 3) { // pin is in PWM mode
+			pwmVals[i] = message[i+2]; //store next PWM value
+			analogWrite(pwmPins[i], pwmVals[i]); //write value to pin
+		}
+	}*/
+}
+=======
 	msgInterval = config[0]*256 + config[1];
 	samplesPerMsg = config[2];
 	for(i = 3;i < CONFIG_BYTES;i++){
@@ -437,6 +530,7 @@ void MiniBee::readConfig(void) {
 	data = (char*)malloc(sizeof(char) * datasize);
 	outMessage = (char*)malloc( sizeof(char) * (datasize + 2 ) );
 	smpInterval = msgInterval / samplesPerMsg;
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 
 	if ( twiOn ){
 	    setupAcceleroTWI();
@@ -654,6 +748,15 @@ boolean MiniBee::getFlagPing(void) {
 } 
 
 int* MiniBee::getPinPing(void) { 
+<<<<<<< HEAD
+	//return ping_pins; 
+}
+
+void MiniBee::setupPing(int *pins) {
+	//*ping_pins = *pins;	//ping pins = ping pins
+	//no Ping setup
+}	
+=======
 	return ping_pin; 
 }
 
@@ -661,9 +764,10 @@ int* MiniBee::getPinPing(void) {
 // 	*ping_pins = *pins;	//ping pins = ping pins
 // 	//no Ping setup
 // }	
+>>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 
 int MiniBee::readPing(void) {
-	long ping;
+	/*long ping;
 
 	// The Devantech US device is triggered by a HIGH pulse of 10 or more microseconds.
 	// We give a short LOW pulse beforehand to ensure a clean HIGH pulse.
@@ -681,7 +785,7 @@ int MiniBee::readPing(void) {
 	ping = pulseIn(ping_pin, HIGH);
  
 	//max value is 30000 so easily fits in an int
-	return int(ping);
+	return int(ping);*/
 }
 
 //**** EVENTS ****//
@@ -716,3 +820,63 @@ void USART_RX_vect(void) {
 }*/
 
 //**** REST OF THE EVENTS ****//
+
+//**** Xbee AT Commands ****//
+int MiniBee::atGetStatus() {
+	incoming = 0;
+	int status = 0;
+	
+	while(incoming != '\r') {
+		if(Serial.available()) {
+			incoming = Serial.read();
+		  	status += incoming;
+		}
+	}
+	
+	return status;
+}
+
+void MiniBee::atSend(char *c) {
+	Serial.print("AT");
+	Serial.print(c);
+	Serial.print('\r');
+}
+
+void MiniBee::atSend(char *c, uint8_t v) {
+	Serial.print("AT");
+	Serial.print(c);
+	Serial.print(v);
+	Serial.print('\r');
+}
+
+int MiniBee::atEnter() {
+	Serial.print("+++");
+	return atGetStatus();
+}
+
+int MiniBee::atExit() {
+	atSend("CN");
+	return atGetStatus();
+}
+
+int MiniBee::atSet(char *c, uint8_t val) {
+	atSend(c);
+	return atGetStatus();
+}
+
+char* MiniBee::atGet(char *c) {
+	char *response = (char *)malloc(sizeof(char)*128);
+	incoming = 0;
+	i = 0;
+	
+	while(incoming != '\r') {
+		if(Serial.available()) {
+			incoming = Serial.read();
+		  response[i] = incoming;
+			i++;
+		}
+	}
+	
+	realloc(response, sizeof(char)*(i-1));
+	return response;
+}
