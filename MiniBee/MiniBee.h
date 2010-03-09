@@ -49,21 +49,11 @@ class MiniBee {
 		void sendData( void );
 
 		uint8_t getId(void);
-<<<<<<< HEAD
-		bool serverOn(void);
-		int available(void);
-				
-		void digitalMessage(void);
-		void pwmMessage(void);
-		
-		//twi
-=======
 		void sendSerialNumber(void);
 		void waitForConfig(void); // waits for the configuration message
 // 		void configure(void);	//configure from eeprom settings
 
 	//twi
->>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 		boolean getFlagTWI();	//returns twi flag state
 		void setupTWI(void);	//setup function for TWI
 		int readTWI(int, int);	//address, number of bytes;
@@ -111,9 +101,6 @@ class MiniBee {
 		#define ESC_CHAR '\\' 
 		#define DEL_CHAR '\n'
 		#define CR '\r'
-		#define NEW_CONFIG 'n'
-		#define OLD_CONFIG 'o'
-		#define DIGITAL_OUT 2
 		
 		//server message types
 		#define S_PWM 'P'
@@ -166,17 +153,6 @@ class MiniBee {
 		boolean checkMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
 		
-<<<<<<< HEAD
-		//config 
-		char *config; //array for all the config bytes from server
-		int *sht_pins;	//scl, sda
-		int *ping_pins[2];	//ping pins
-		void writeConfig(char *);
-		void readConfig(void);
-		bool server_status;
-					
-		//listener functions
-=======
 	//config 
 		char *config; //array of pointers for all the config bytes
 		void writeConfig(char *);
@@ -224,10 +200,9 @@ class MiniBee {
 		
 
 	//listener functions
->>>>>>> 213cae257565d555996eb0b0544861d1851ef524
 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
 		friend void PCINT0_vect(void);	//interrupt vector
-		void (*dEvent)(int, int);	//event listener (pin number, pin status)
+		void (*dEvent)(int, int);	//event listener being passed to listner functions
 		
 		void serialUpdate(void);
 		void (*sEvent)(void);
