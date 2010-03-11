@@ -1,11 +1,23 @@
 TODO:
-make part for the battery holder (1054KCT)
-breakout cts and rts to digi pins (D12-D13)
+shop for different header solutions 
+smaller capacitor package
 labels (SCL, SDA - A4 A5)
 look for a small switch (what they have on the cui32?)
-fuses/breakers? (507-1489-1)
 logo
-smaller capacitor package
 new accel and/or gyro packages
-shop for different header solutions 
 mounting hole(s)
+
+make part for the battery holder (1054KCT) - done but check again when awake
+fuses/breakers? (507-1489-1 replaced by 507-1480-1 on the schematic, same thing but diff package) - done
+
+possible headers (17 pins to breakout + 3.3v, gnd x 2 + rx, tx, rst)
+90 degrees headers
+bad: connectors are far, loss of board space
+good: fits under the xbee's front end.
+http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=S5563-ND	
+
+bad: weird connection type?
+good: more compact, fits under xbee's front end.
+http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=A99448TR-ND
+
+
