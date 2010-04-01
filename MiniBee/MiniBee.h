@@ -5,7 +5,10 @@
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <WProgram.h>
-#include "../Wire/Wire.h"
+// #include "../Wire/Wire.h"
+
+// #include <Wire.h>
+
 
 enum MiniBeePinConfig { 
   NotUsed,
@@ -14,7 +17,7 @@ enum MiniBeePinConfig {
   SHTClock, SHTData, 
   TWIClock, TWIData,
   Ping
-}
+};
 
 extern "C" {
 	void PCINT0_vect(void) __attribute__ ((signal));
@@ -27,7 +30,8 @@ class MiniBee {
 
 		void begin(int); //init function
 		void doLoopStep(void); // loop function
-		
+	
+		void readXBeeSerial(void);
 	//AT CMD (communicate with XBee)
 		int atEnter(void);
 		int atExit(void);
@@ -50,7 +54,7 @@ class MiniBee {
 
 		uint8_t getId(void);
 		void sendSerialNumber(void);
-		void waitForConfig(void); // waits for the configuration message
+// 		void waitForConfig(void); // waits for the configuration message
 // 		void configure(void);	//configure from eeprom settings
 
 	//twi
@@ -59,8 +63,8 @@ class MiniBee {
 		int readTWI(int, int);	//address, number of bytes;
 		int readTWI(int, int, int);	//address, register, number of bytes
 
-		void setupAcceleroTWI();
-		void readAcceleroTWI( int address, int dboff );
+		void setupAccelleroTWI();
+		void readAccelleroTWI( int address, int dboff );
 
 	//sht
 		int ioSHT;
@@ -68,7 +72,9 @@ class MiniBee {
 		int valSHT; 
 		boolean getFlagSHT();	//returns sht flag state
 		int *getPinSHT();	//returns the pins used for SHT
-		void setupSHT(int*);	//setup function for SHT
+
+// 		void setupSHT(int*);	//setup function for SHT
+		void setupSHT();	//setup function for SHT
 		void startSHT(void);
 		void resetSHT(void);
 		void softResetSHT(void);
@@ -81,8 +87,8 @@ class MiniBee {
 		
 	//ping
 		boolean getFlagPing();	//returns ping flag state
-		int *getPinPing();	//returns the pins used for Ping
-		void setupPing(int*);	//setup function for Ping
+		int getPinPing();	//returns the pins used for Ping
+// 		void setupPing(int*);	//setup function for Ping
 		int readPing(void);
 			
 		//listener function
@@ -170,8 +176,8 @@ class MiniBee {
 		boolean analog_precision[8]; // sets whether analog 10 bit precision is on or not
 
 		boolean pwm_on[6]; // sets whether pwm pin is on or not
-		uint8_t pwm_pins [] = { 3,5,6, 8,9,10 };
-		int pwm_values[] = {0,0,0, 0,0,0};
+		static uint8_t pwm_pins[]; // = { 3,5,6, 8,9,10 };
+		int pwm_values[]; // = {0,0,0, 0,0,0};
 		
 		boolean digital_out[19]; // sets whether digital out on
 		int digital_values[19];
@@ -191,11 +197,11 @@ class MiniBee {
 		#define  SHT_W_STAT 0x06
 		#define  SHT_RST_CMD 0x1E
 
-
+	// state machine for the MiniBee...
 		int status;
 		#define STARTING 0
 		#define SENSING 1
-		#define WAITINGHOST 2
+		#define WAITFORHOST 2
 		#define WAITFORCONFIG 3
 		
 
