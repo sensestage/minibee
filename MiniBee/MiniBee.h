@@ -32,6 +32,10 @@ class MiniBee {
 		void doLoopStep(void); // loop function
 	
 		void readXBeeSerial(void);
+		char *serial;
+
+		int status;
+
 	//AT CMD (communicate with XBee)
 		int atEnter(void);
 		int atExit(void);
@@ -97,6 +101,9 @@ class MiniBee {
 		void attachSerialEvent(void (*event)(void));
 		void SerialEvent(void);
 	
+		void setSoftSerial( bool onoff, int baud_rate );
+		void initSoftSerial(int baud_rate);
+		
 	private:
 		#define CONFIG_BYTES 22
 		#define XBEE_SLEEP_PIN 2
@@ -108,6 +115,7 @@ class MiniBee {
 		#define DEL_CHAR '\n'
 		#define CR '\r'
 		
+		#define S_NO_MSG '0'
 		//server message types
 		#define S_PWM 'P'
 		#define S_DIGI 'D'
@@ -121,6 +129,7 @@ class MiniBee {
 		//node message types
 		#define N_DATA 'd'
 		#define N_SER 's'
+		#define N_INFO 'i'
 		
 		uint8_t mask;
 		uint8_t i;
@@ -131,8 +140,10 @@ class MiniBee {
 		uint8_t prev_msg;
 		char incoming;
 		char msg_type;
-		char *serial;
+
 		char *dest_addr;
+		char *my_addr;
+
 		char *message;
 
 		int msgInterval;
@@ -155,6 +166,7 @@ class MiniBee {
 		
 	//msg with network
 		void slip(char);
+		void slipSoft(char);
 		boolean checkNodeMsg( uint8_t nid, uint8_t mid );
 		boolean checkMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
@@ -198,21 +210,20 @@ class MiniBee {
 		#define  SHT_RST_CMD 0x1E
 
 	// state machine for the MiniBee...
-		int status;
 		#define STARTING 0
 		#define SENSING 1
 		#define WAITFORHOST 2
 		#define WAITFORCONFIG 3
 		
 
-	//listener functions
-		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
-		friend void PCINT0_vect(void);	//interrupt vector
-		void (*dEvent)(int, int);	//event listener being passed to listner functions
-		
-		void serialUpdate(void);
-		void (*sEvent)(void);
-		friend void USART_RX_vect(void);
+// 	//listener functions
+// 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
+// 		friend void PCINT0_vect(void);	//interrupt vector
+// 		void (*dEvent)(int, int);	//event listener being passed to listner functions
+// 		
+// 		void serialUpdate(void);
+// 		void (*sEvent)(void);
+// 		friend void USART_RX_vect(void);
 };
 
 extern MiniBee Bee;	
