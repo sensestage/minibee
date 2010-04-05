@@ -103,7 +103,7 @@ void MiniBee::doLoopStep(void){
       //send( N_INFO, "sensing" );
 	// read sensors:
 	readSensors( datacount );
-	if ( curSample > samplesPerMsg ){
+	if ( curSample >= samplesPerMsg ){
 	    sendData();
 	    curSample = 0;
 	    datacount = 0;
@@ -457,6 +457,8 @@ void MiniBee::readSensors( uint8_t db ){
       dataFromInt( readPing(), db );
       db += 2;
     }
+    
+    curSample++;
 }
 
 void MiniBee::sendData(void){
@@ -580,6 +582,7 @@ void MiniBee::parseConfig(void){
 	    }
 	}
 	
+	datacount = 0;
 	datasize = datasize * samplesPerMsg;
 	data = (char*)malloc(sizeof(char) * datasize);
 	outMessage = (char*)malloc( sizeof(char) * (datasize + 2 ) );
@@ -596,6 +599,12 @@ void MiniBee::parseConfig(void){
 // 	    setupPing();
 // 	}
 	
+	char configInfo[4];
+	configInfo[0] = msgInterval;
+	configInfo[1] = samplesPerMsg;
+	configInfo[2] = smpInterval;
+	configInfo[3] = datasize;
+	send( N_INFO, configInfo, 4 );
 }
 
 //TWI --- for LIS302DL accelerometer
