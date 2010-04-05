@@ -107,7 +107,7 @@ class MiniBee {
 		void initSoftSerial(int baud_rate);
 		
 	private:
-		#define CONFIG_BYTES 22
+		#define CONFIG_BYTES 23
 		#define MAX_MESSAGE_SIZE 32
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
@@ -133,6 +133,8 @@ class MiniBee {
 		#define N_DATA 'd'
 		#define N_SER 's'
 		#define N_INFO 'i'
+		#define N_WAIT 'w'
+		#define N_CONF 'c'
 		
 		uint8_t mask;
 		uint8_t i;

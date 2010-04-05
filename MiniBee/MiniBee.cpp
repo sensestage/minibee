@@ -498,14 +498,14 @@ void MiniBee::sendSerialNumber(void){
 void MiniBee::writeConfig(char *msg) {
 // 	eeprom_write_byte((uint8_t *) i, id ); // writing id
 	for(i = 0;i < CONFIG_BYTES;i++){
-	    eeprom_write_byte((uint8_t *) i, msg[i+1]);
+	    eeprom_write_byte((uint8_t *) i, msg[i]);
 	    //write byte to memory
 	}
 }
 
 void MiniBee::readConfigMsg(char *msg){
 	for(i = 0;i < CONFIG_BYTES;i++){
-	   config[i] = msg[i+1];
+	   config[i] = msg[i];
 	}
 	parseConfig();
 }
@@ -515,55 +515,61 @@ void MiniBee::readConfig(void) {
 	parseConfig();
 }
 
+#define PINOFFSET 3
+#define ANAOFFSET 11
+
 void MiniBee::parseConfig(void){
 	int datasize = 0;
+	int pin = 0;
 
-	msgInterval = config[0]*256 + config[1];
-	samplesPerMsg = config[2];
-	for(i = 3;i < CONFIG_BYTES;i++){
-	    switch( config[i] ){
+	config_id = config[0];
+	msgInterval = config[1]*256 + config[2];
+	samplesPerMsg = config[3];
+	for(i = 0;i < (CONFIG_BYTES-4);i++){
+	    pin = i + PINOFFSET;
+	    switch( config[i+4] ){
 	      case AnalogIn10bit:
-		if ( i > 13 ){
-		    analog_precision[i-14] = true;
-		    analog_in[i-14] = true;
-		    pinMode( i, INPUT );
+		if ( i >= ANAOFFSET ){
+		    analog_precision[i-ANAOFFSET] = true;
+		    analog_in[i-ANAOFFSET] = true;
+		    pinMode( pin, INPUT );
 		    datasize += 2;
 		}
 		break;
 	      case AnalogIn:
-		if ( i > 13 ){
-		    analog_precision[i-14] = false;
-		    analog_in[i-14] = true;
-		    pinMode( i, INPUT );
+		if ( i >= ANAOFFSET ){
+		    analog_precision[i-ANAOFFSET] = false;
+		    analog_in[i-ANAOFFSET] = true;
+		    pinMode( pin, INPUT );
 		    datasize += 1;
 		}
 		break;
 	      case DigitalIn:
-		pinMode( i, INPUT );
-		digital_in[i-3] = true;
+		pinMode( pin, INPUT );
+		digital_in[i] = true;
 		datasize += 1;
 		break;
 	      case AnalogOut:
 		for ( int j=0; j < 6; j++ ){
-		    if ( pwm_pins[j] == i ){
-			pinMode( i, OUTPUT );
+		    if ( pwm_pins[j] == pin ){
+			pinMode( pin, OUTPUT );
 			pwm_on[j] = true;
 		    }
 		}
 		break;
 	      case DigitalOut:
-		digital_out[i-3] = true;
-		pinMode( i, OUTPUT );
+		digital_out[i] = true;
+		pinMode( pin, OUTPUT );
 		break;
 	      case SHTClock:
-		sht_pins[0] = i;
+		sht_pins[0] = pin;
 		shtOn = true;
-		pinMode( i, OUTPUT );
+		pinMode( pin, OUTPUT );
 		break;
 	      case SHTData:
-		sht_pins[1] = i;
+		sht_pins[1] = pin;
 		shtOn = true;
-		pinMode( i, OUTPUT );
+		pinMode( pin, OUTPUT );
 		datasize += 4;
 		break;
 	      case TWIClock:
@@ -573,7 +579,7 @@ void MiniBee::parseConfig(void){
 		break;
 	      case Ping:
 		pingOn = true;
-		ping_pin = i;
+		ping_pin = pin;
 		datasize += 2;
 		break;
 	      case NotUsed:
