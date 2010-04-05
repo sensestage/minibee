@@ -102,7 +102,7 @@ void MiniBee::doLoopStep(void){
     case SENSING:
       //send( N_INFO, "sensing" );
 	// read sensors:
-	readSensors( datacount );
+	datacount = readSensors( datacount );
 	if ( curSample >= samplesPerMsg ){
 	    sendData();
 	    curSample = 0;
@@ -413,7 +413,7 @@ void MiniBee::dataFromInt( int output, int offset ){
   data[offset+1] = byte(output%256);
 }
 
-void MiniBee::readSensors( uint8_t db ){
+uint8_t MiniBee::readSensors( uint8_t db ){
     int value;
     // read analog sensors
     for ( i = 0; i < 8; i++ ){
@@ -459,6 +459,8 @@ void MiniBee::readSensors( uint8_t db ){
     }
     
     curSample++;
+//     datacount = db;
+    return db;
 }
 
 void MiniBee::sendData(void){
