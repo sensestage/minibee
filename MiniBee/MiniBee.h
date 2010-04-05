@@ -53,7 +53,7 @@ class MiniBee {
 		void setDigital();
 	
 	// read input pins
-		void readSensors( uint8_t );
+		uint8_t readSensors( uint8_t );
 	
 	// send data
 		void sendData( void );
