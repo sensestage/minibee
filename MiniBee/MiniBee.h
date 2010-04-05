@@ -5,6 +5,7 @@
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <WProgram.h>
+// #include <EEPROM.h>
 // #include "../Wire/Wire.h"
 
 // #include <Wire.h>
@@ -20,8 +21,8 @@ enum MiniBeePinConfig {
 };
 
 extern "C" {
-	void PCINT0_vect(void) __attribute__ ((signal));
-	void USART_RX_vect(void) __attribute__ ((signal));
+ 	void PCINT0_vect(void) __attribute__ ((signal));
+ 	void USART_RX_vect(void) __attribute__ ((signal));
 }
 
 class MiniBee {
@@ -106,6 +107,7 @@ class MiniBee {
 		
 	private:
 		#define CONFIG_BYTES 22
+		#define MAX_MESSAGE_SIZE 128
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
 		#define AT_ERROR 407
@@ -173,8 +175,10 @@ class MiniBee {
 		
 	//config 
 		char *config; //array of pointers for all the config bytes
-		void writeConfig(char *);
-		void readConfig(void);
+		void writeConfig(char *); // eeprom write
+		void readConfig(void); // eeprom read
+		void readConfigMsg(char *); // assign config from msg
+		void parseConfig(void); // parse the config
 
 	// collecting sensor data:
 		void dataFromInt( int output, int offset );
