@@ -17,7 +17,8 @@ enum MiniBeePinConfig {
   AnalogIn, AnalogOut, AnalogIn10bit, 
   SHTClock, SHTData, 
   TWIClock, TWIData,
-  Ping
+  Ping,
+  UnConfigured = 200
 };
 
 extern "C" {
@@ -44,7 +45,7 @@ class MiniBee {
 		char* atGet(char *);
 
 	// serial communication with network
-		void send(char, char *);
+		void send(char, char *, int);
 		void read(void);
 
 	// set output pins
@@ -107,7 +108,7 @@ class MiniBee {
 		
 	private:
 		#define CONFIG_BYTES 22
-		#define MAX_MESSAGE_SIZE 128
+		#define MAX_MESSAGE_SIZE 32
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
 		#define AT_ERROR 407

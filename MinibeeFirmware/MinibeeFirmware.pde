@@ -1,41 +1,41 @@
 // #include <EEPROM.h>
 #include <Wire.h>
 #include <MiniBee.h>
-#include <NewSoftSerial.h>
-
-
-#define SoftRX 12
-#define SoftTX 13
-
-// NewSoftSerial softSerial;
-
-NewSoftSerial softSerial(SoftRX, SoftTX);
-
-void initSoftSerial( int baud_rate ){
-//   // define pin modes for tx, rx, led pins:
-//    softSerial =  
-//    pinMode(SoftRX, INPUT);
-//    pinMode(SoftTX, OUTPUT);
-   // set the data rate for the SoftwareSerial port
-   softSerial.begin(baud_rate);
-}
-
-void sendSoft(char type, char *p) {
-  int i;
- 	softSerial.print(ESC_CHAR, BYTE);
- 	softSerial.print(type, BYTE);
- 	for(i = 0;i < strlen(p);i++) slipSoft(p[i]);
- 	softSerial.print(DEL_CHAR, BYTE);
-
-}
-
-void slipSoft(char c) {
- 	if((c == ESC_CHAR) || (c == DEL_CHAR) || (c == CR))
- 	    softSerial.print(ESC_CHAR, BYTE);
- 	softSerial.print(c, BYTE);
-}
-
-char sz[8];
+// #include <NewSoftSerial.h>
+// 
+// 
+// #define SoftRX 12
+// #define SoftTX 13
+// 
+// // NewSoftSerial softSerial;
+// 
+// NewSoftSerial softSerial(SoftRX, SoftTX);
+// 
+// void initSoftSerial( int baud_rate ){
+// //   // define pin modes for tx, rx, led pins:
+// //    softSerial =  
+// //    pinMode(SoftRX, INPUT);
+// //    pinMode(SoftTX, OUTPUT);
+//    // set the data rate for the SoftwareSerial port
+//    softSerial.begin(baud_rate);
+// }
+// 
+// void sendSoft(char type, char *p) {
+//   int i;
+//  	softSerial.print(ESC_CHAR, BYTE);
+//  	softSerial.print(type, BYTE);
+//  	for(i = 0;i < strlen(p);i++) slipSoft(p[i]);
+//  	softSerial.print(DEL_CHAR, BYTE);
+// 
+// }
+// 
+// void slipSoft(char c) {
+//  	if((c == ESC_CHAR) || (c == DEL_CHAR) || (c == CR))
+//  	    softSerial.print(ESC_CHAR, BYTE);
+//  	softSerial.print(c, BYTE);
+// }
+// 
+// char sz[8];
 
 void setup() {
 //     char *response;// = (char *)malloc(sizeof(char)*6);
