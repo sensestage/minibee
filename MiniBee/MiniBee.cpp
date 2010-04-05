@@ -365,9 +365,9 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 		case S_CONFIG:
 		      // check if right config_id:
 		      if ( msg[0] == config_id ){
-// 			writeConfig( msg );
-// 			readConfig();
-			readConfigMsg( msg );
+			writeConfig( msg );
+ 			readConfig();
+// 			readConfigMsg( msg );
 			status = SENSING;
 			send( N_INFO, "sensing", 7 );
 		      }
@@ -512,7 +512,6 @@ void MiniBee::readConfigMsg(char *msg){
 
 void MiniBee::readConfig(void) {
 	for(i = 0;i < CONFIG_BYTES;i++) config[i] = eeprom_read_byte((uint8_t *) i);
-	
 	parseConfig();
 }
 
