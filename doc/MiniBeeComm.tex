@@ -39,6 +39,7 @@ So, the MiniBee firmware has to check for:
 \begin{tabular}{llll}
 description & type & data & sender\\
 \hline
+Data output & 'O' & node ID + msg ID + N values & server\\
 PWM & 'P' & node ID + msg ID + 6 values & server\\
 Digital out & 'D' & node ID + msg ID + 19 values & server\\
 Data & 'd' & node ID + msg ID + N values & node\\
@@ -46,8 +47,10 @@ Data & 'd' & node ID + msg ID + N values & node\\
 Announce & 'A' &  & server \\
 Quit & 'Q' &  & server \\
 Serial number & 's' & Serial High (SH) + Serial Low (SL) & node\\
-ID assignment & 'I' & msg ID + SH + SL + node ID + (*config ID*) & server \\
+ID assignment & 'I' & SH + SL + node ID + (*config ID*) & server \\
+Wait for config & 'w' & node ID + config ID & node \\
 Configuration & 'C' & config ID + configuration bytes & server \\
+Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + datasize + outsize & node \\
 \hline
 "full package" (Chronotopia) & 'a' & 6 * 6 + 3 values & server \\
 "light" (PWM up to now)      & 'l' & node ID + 6 values & server
@@ -66,9 +69,11 @@ Configuration & 'C' & config ID + configuration bytes & server \\
  \item Coordinator sends node ID (msgtype 'I') with an optional configuration ID. If so, the board will receive a new configuration.
 %  \item \textit{if new config} Change MY to given destination address.
 %  \item \textit{if new config} Send coordinator a message of having changed to destination address.
+ \item \textit{if new config} Node sends waiting message (msgtype 'w').
  \item \textit{if new config} Wait for configuration message.
  \item \textit{if new config} Write new config to EEPROM and confirm received configuration message.
  \item Load config from EEPROM.
+ \item Node sends config summary (msgtype 'c').
  \item Start sending data, or wait for receiving data (depending on config).
 \end{enumerate}
 

@@ -122,6 +122,7 @@ class MiniBee {
 		//server message types
 		#define S_PWM 'P'
 		#define S_DIGI 'D'
+		#define S_OUT 'O'
 		#define S_ANN 'A'
 		#define S_QUIT 'Q'
 		#define S_ID 'I'

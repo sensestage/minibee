@@ -54,12 +54,11 @@ void MiniBee::begin(int baud_rate) {
   	digitalWrite(XBEE_SLEEP_PIN, 0);
 	delay(500);
 
-	send( N_INFO, "starting", 8 );
+// 	send( N_INFO, "starting", 8 );
 
 	readXBeeSerial();
 	// allow some delay before sending data
 	delay(500);
-	
 
 	sendSerialNumber();
 
@@ -67,7 +66,7 @@ void MiniBee::begin(int baud_rate) {
 // 	send(N_INFO, my_addr );
 	
 	status = WAITFORHOST;
-	send( N_INFO, "waitforhost", 11 );
+// 	send( N_INFO, "waitforhost", 11 );
 }
 
 // void MiniBee::setSoftSerial(bool onoff, int baud_rate){
@@ -111,7 +110,7 @@ void MiniBee::doLoopStep(void){
 	delay( smpInterval );
 	break;
     case STARTING:
-      send( N_INFO, "starting", 8 );
+//       send( N_INFO, "starting", 8 );
       delay( 100 );
       break;
     case WAITFORCONFIG:
@@ -314,24 +313,25 @@ boolean MiniBee::checkMsg( uint8_t mid ){
 void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
   	int len;
 	char * ser;
-	char typeSize[2];
+
+/*	char typeSize[2];
 	typeSize[0] = type;
 	typeSize[1] = size;
 // 	typeSize[2] = '\0';
 	// msg loopback;
 	send( N_INFO, typeSize, 2 );
-	send( N_INFO, msg, size );
+	send( N_INFO, msg, size );*/
 	switch(type) {
 		case S_ANN:
 			sendSerialNumber();
 			status = WAITFORHOST;
 // 			configure();
-			send( N_INFO, "waitforhost", 11 );
+// 			send( N_INFO, "waitforhost", 11 );
 			break;
 		case S_QUIT:
 			status = WAITFORHOST;
 			//do something to stop doing anything
-			send( N_INFO, "waitforhost", 11 );
+// 			send( N_INFO, "waitforhost", 11 );
 			break;
 		case S_ID:
 			// check for msg ID
@@ -350,15 +350,20 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 				  config_id = msg[len+1];
 // 				  waitForConfig();
 				  status = WAITFORCONFIG;
-				  send( N_INFO, "waitforconfig", 13 );
+
+				  char configInfo[2];
+				  configInfo[0] = id;
+				  configInfo[1] = config_id;
+				  send( N_WAIT, configInfo, 2 );
+// 				  send( N_INFO, "waitforconfig", 13 );
 			      } else if ( size == (len+1) ) {
 				  readConfig();
 				  status = SENSING;
-				  send( N_INFO, "sensing", 7 );
+// 				  send( N_INFO, "sensing", 7 );
 			      }
-			  } else {
-			      send( N_INFO, "wrong serial number", 19 );
-			      send( N_INFO, ser, len );
+// 			  } else {
+// 			      send( N_INFO, "wrong serial number", 19 );
+// 			      send( N_INFO, ser, len );
 			  }
 // 			}
 			break;
@@ -369,7 +374,7 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
  			readConfig();
 // 			readConfigMsg( msg );
 			status = SENSING;
-			send( N_INFO, "sensing", 7 );
+// 			send( N_INFO, "sensing", 7 );
 		      }
 		case S_PWM:
 			if ( checkNodeMsg( msg[0], msg[1] ) ){
@@ -521,6 +526,7 @@ void MiniBee::readConfig(void) {
 void MiniBee::parseConfig(void){
 	int datasize = 0;
 	int pin = 0;
+	int datasizeout = 0;
 
 	config_id = config[0];
 	msgInterval = config[1]*256 + config[2];
@@ -554,12 +560,14 @@ void MiniBee::parseConfig(void){
 		    if ( pwm_pins[j] == pin ){
 			pinMode( pin, OUTPUT );
 			pwm_on[j] = true;
+			datasizeout++;
 		    }
 		}
 		break;
 	      case DigitalOut:
 		digital_out[i] = true;
 		pinMode( pin, OUTPUT );
+		datasizeout++;
 		break;
 	      case SHTClock:
 		sht_pins[0] = pin;
@@ -606,12 +614,14 @@ void MiniBee::parseConfig(void){
 // 	    setupPing();
 // 	}
 	
-	char configInfo[4];
-	configInfo[0] = msgInterval;
-	configInfo[1] = samplesPerMsg;
-	configInfo[2] = smpInterval;
-	configInfo[3] = datasize;
-	send( N_INFO, configInfo, 4 );
+	char configInfo[6];
+	configInfo[0] = id;
+	configInfo[1] = config_id;
+	configInfo[2] = samplesPerMsg;
+	configInfo[3] = smpInterval;
+	configInfo[4] = datasize;
+	configInfo[5] = datasizeout;
+	send( N_CONF, configInfo, 6 );
 }
 
 //TWI --- for LIS302DL accelerometer
