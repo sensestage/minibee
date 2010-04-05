@@ -1,7 +1,7 @@
 #ifndef MiniBee_h
 #define MiniBee_h
 
-#include <avr/interrupt.h>
+// #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <WProgram.h>
@@ -21,10 +21,10 @@ enum MiniBeePinConfig {
   UnConfigured = 200
 };
 
-extern "C" {
- 	void PCINT0_vect(void) __attribute__ ((signal));
- 	void USART_RX_vect(void) __attribute__ ((signal));
-}
+// extern "C" {
+//  	void PCINT0_vect(void) __attribute__ ((signal));
+//  	void USART_RX_vect(void) __attribute__ ((signal));
+// }
 
 class MiniBee {
 	public:
@@ -34,9 +34,6 @@ class MiniBee {
 		void doLoopStep(void); // loop function
 	
 		void readXBeeSerial(void);
-		char *serial;
-
-		int status;
 
 	//AT CMD (communicate with XBee)
 		int atEnter(void);
@@ -96,19 +93,16 @@ class MiniBee {
 		int getPinPing();	//returns the pins used for Ping
 // 		void setupPing(int*);	//setup function for Ping
 		int readPing(void);
-			
+
 		//listener function
-		void setupDigitalEvent(void (*event)(int, int));	//attach digital pin listener
-		void digitalEvent(int pin, int state);	//digital pin event function (add it to the arduino sketch to receive the data)
-		void attachSerialEvent(void (*event)(void));
-		void SerialEvent(void);
-	
-		void setSoftSerial( bool onoff, int baud_rate );
-		void initSoftSerial(int baud_rate);
-		
+// 		void setupDigitalEvent(void (*event)(int, int));	//attach digital pin listener
+// 		void digitalEvent(int pin, int state);	//digital pin event function (add it to the arduino sketch to receive the data)
+// 		void attachSerialEvent(void (*event)(void));
+// 		void SerialEvent(void);
+
 	private:
 		#define CONFIG_BYTES 23
-		#define MAX_MESSAGE_SIZE 32
+		#define MAX_MESSAGE_SIZE 26
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
 		#define AT_ERROR 407
@@ -147,9 +141,13 @@ class MiniBee {
 		char incoming;
 		char msg_type;
 
-		char *dest_addr;
-		char *my_addr;
+		int status;
 
+		char *serial;
+// 		char *dest_addr;
+// 		char *my_addr;
+
+		// incoming message
 		char *message;
 
 		int msgInterval;
@@ -159,7 +157,6 @@ class MiniBee {
 		int curSample;
 		int smpInterval;
 		char *outMessage;
-
 
 		boolean shtOn;
 		boolean twiOn;
@@ -174,7 +171,7 @@ class MiniBee {
 		void slip(char);
 		void slipSoft(char);
 		boolean checkNodeMsg( uint8_t nid, uint8_t mid );
-		boolean checkMsg( uint8_t mid );
+// 		boolean checkMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
 		
 	//config 
