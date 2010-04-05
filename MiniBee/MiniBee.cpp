@@ -1,8 +1,6 @@
 #include "MiniBee.h"
 #include <Wire.h>
 
-// #include <EEPROM.h>
-
 // #include <NewSoftSerial.h>
 
 uint8_t MiniBee::pwm_pins[] = { 3,5,6, 8,9,10 };
@@ -58,9 +56,8 @@ void MiniBee::begin(int baud_rate) {
 
 	readXBeeSerial();
 	// allow some delay before sending data
-	delay(2500);
-
-	send( N_INFO, "starting" );
+	delay(500);
+	
 
 	sendSerialNumber();
 
@@ -101,7 +98,7 @@ void MiniBee::doLoopStep(void){
   // do something based on current status:
   switch( status ){
     case SENSING:
-//       send( N_INFO, "sensing" );
+      //send( N_INFO, "sensing" );
 	// read sensors:
 	readSensors( datacount );
 	if ( curSample > samplesPerMsg ){
@@ -135,12 +132,11 @@ void MiniBee::readXBeeSerial(void){
     
     //populate whatever xBee properties we'll need.
     atEnter();
+
 //     my_addr = atGet( "MY" );
 
     response = atGet( "SH" );
-    delay(50);
     response2 = atGet( "SL" );
-    delay(50);
 
     serial = (char *)malloc(sizeof(char)* (
       // length of both strings plus null-termination
@@ -207,7 +203,7 @@ void MiniBee::atSend(char *c, uint8_t v) {
 int MiniBee::atEnter() {
 	delay( 1000 );
 	Serial.print("+++");
-	delay( 50 );
+	delay( 500 );
 	return atGetStatus();
 }
 
@@ -360,11 +356,9 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 		case S_CONFIG:
 		      // check if right config_id:
 		      if ( msg[0] == config_id ){
-// 			writeConfig( msg );
-// 			readConfig();
-			readConfigMsg( msg );
+			writeConfig( msg );
+			readConfig();
 			status = SENSING;
-			send( N_INFO, "received config" );
 			send( N_INFO, "sensing" );
 		      }
 		case S_PWM:
@@ -490,29 +484,16 @@ void MiniBee::sendSerialNumber(void){
 void MiniBee::writeConfig(char *msg) {
 // 	eeprom_write_byte((uint8_t *) i, id ); // writing id
 	for(i = 0;i < CONFIG_BYTES;i++){
-// 	    EEPROM.write(i, msg[i+1]);
 	    eeprom_write_byte((uint8_t *) i, msg[i+1]);
 	    //write byte to memory
 	}
 }
 
-void MiniBee::readConfigMsg(char *msg){
-	for(i = 0;i < CONFIG_BYTES;i++){
-	   config[i] = msg[i+1];
-	}
-	parseConfig();
-}
-
-void MiniBee::readConfig(void) {  
-	for(i = 0;i < CONFIG_BYTES;i++){
- 	   config[i] = eeprom_read_byte((uint8_t *) i);
-// 	   config[i] = EEPROM.read( i );
-	}
-	parseConfig();
-}
-
-void MiniBee::parseConfig(void){
+void MiniBee::readConfig(void) {
 	int datasize = 0;
+  
+	for(i = 0;i < CONFIG_BYTES;i++) config[i] = eeprom_read_byte((uint8_t *) i);
+	
 	msgInterval = config[0]*256 + config[1];
 	samplesPerMsg = config[2];
 	for(i = 3;i < CONFIG_BYTES;i++){
