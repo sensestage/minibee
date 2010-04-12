@@ -40,13 +40,15 @@ So, the MiniBee firmware has to check for:
 description & type & data & sender\\
 \hline
 Data output & 'O' & node ID + msg ID + N values & server\\
-PWM & 'P' & node ID + msg ID + 6 values & server\\
-Digital out & 'D' & node ID + msg ID + 19 values & server\\
+%PWM & 'P' & node ID + msg ID + 6 values & server\\
+%Digital out & 'D' & node ID + msg ID + 19 values & server\\
 Data & 'd' & node ID + msg ID + N values & node\\
+Loopback & 'L' & node ID + msg ID + onoff & server\\
+Running & 'R' & node ID + msg ID + onoff & server\\
 \hline
 Announce & 'A' &  & server \\
 Quit & 'Q' &  & server \\
-Serial number & 's' & Serial High (SH) + Serial Low (SL) & node\\
+Serial number & 's' & Serial High (SH) + Serial Low (SL) + library version + board revision & node\\
 ID assignment & 'I' & SH + SL + node ID + (*config ID*) & server \\
 Wait for config & 'w' & node ID + config ID & node \\
 Configuration & 'C' & config ID + configuration bytes & server \\

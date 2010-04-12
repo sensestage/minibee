@@ -10,6 +10,12 @@
 
 // #include <Wire.h>
 
+#define MINIBEE_LIBVERSION 1
+#ifndef MINIBEE_REVISION
+#define MINIBEE_REVISION 'A'
+#endif
+
+
 
 enum MiniBeePinConfig { 
   NotUsed,
@@ -46,8 +52,11 @@ class MiniBee {
 		void read(void);
 
 	// set output pins
+		void setRunning( uint8_t ); 
+		void setLoopback( uint8_t ); 
 		void setPWM();
 		void setDigital();
+		void setOutput();
 	
 	// read input pins
 		uint8_t readSensors( uint8_t );
@@ -61,7 +70,7 @@ class MiniBee {
 // 		void configure(void);	//configure from eeprom settings
 
 	//twi
-		boolean getFlagTWI();	//returns twi flag state
+		bool getFlagTWI();	//returns twi flag state
 		void setupTWI(void);	//setup function for TWI
 		int readTWI(int, int);	//address, number of bytes;
 		int readTWI(int, int, int);	//address, register, number of bytes
@@ -73,8 +82,8 @@ class MiniBee {
 		int ioSHT;
 		int ackSHT;
 		int valSHT; 
-		boolean getFlagSHT();	//returns sht flag state
-		int *getPinSHT();	//returns the pins used for SHT
+		bool getFlagSHT();	//returns sht flag state
+		uint8_t *getPinSHT();	//returns the pins used for SHT
 
 // 		void setupSHT(int*);	//setup function for SHT
 		void setupSHT();	//setup function for SHT
@@ -89,8 +98,8 @@ class MiniBee {
 		int shiftInSHT(void);
 		
 	//ping
-		boolean getFlagPing();	//returns ping flag state
-		int getPinPing();	//returns the pins used for Ping
+		bool getFlagPing();	//returns ping flag state
+		uint8_t getPinPing();	//returns the pins used for Ping
 // 		void setupPing(int*);	//setup function for Ping
 		int readPing(void);
 
@@ -106,6 +115,10 @@ class MiniBee {
 		#define XBEE_SLEEP_PIN 2
 		#define AT_OK 167
 		#define AT_ERROR 407
+//  		#define AT_AT "AT"
+// 		char * at_AT[3] = "AT";
+// 		#define AT_ENTER "+++"
+// 		#define AT_EXIT "CN"
 		#define XBEE_SER 8
 		#define DEST_ADDR "1"
 		#define ESC_CHAR '\\' 
@@ -117,6 +130,8 @@ class MiniBee {
 		#define S_PWM 'P'
 		#define S_DIGI 'D'
 		#define S_OUT 'O'
+		#define S_RUN 'R'
+		#define S_LOOP 'L'
 		#define S_ANN 'A'
 		#define S_QUIT 'Q'
 		#define S_ID 'I'
@@ -141,7 +156,9 @@ class MiniBee {
 		char incoming;
 		char msg_type;
 
-		int status;
+		uint8_t status;
+		
+		bool loopback;
 
 		char *serial;
 // 		char *dest_addr;
@@ -151,16 +168,16 @@ class MiniBee {
 		char *message;
 
 		int msgInterval;
-		int samplesPerMsg;
+		uint8_t samplesPerMsg;
 		uint8_t msg_id_send;
 		
-		int curSample;
+		uint8_t curSample;
 		int smpInterval;
 		char *outMessage;
 
-		boolean shtOn;
-		boolean twiOn;
-		boolean pingOn;
+		bool shtOn;
+		bool twiOn;
+		bool pingOn;
 		
 	//AT private commands
 		int atGetStatus(void);
@@ -170,7 +187,7 @@ class MiniBee {
 	//msg with network
 		void slip(char);
 		void slipSoft(char);
-		boolean checkNodeMsg( uint8_t nid, uint8_t mid );
+		bool checkNodeMsg( uint8_t nid, uint8_t mid );
 // 		boolean checkMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
 		
@@ -186,20 +203,20 @@ class MiniBee {
 		char *data;
 		int datacount;
 
-		int sht_pins[2];	//scl, sda  clock, data
-		int ping_pin;	//ping pins
+		uint8_t sht_pins[2];	//scl, sda  clock, data
+		uint8_t ping_pin;	//ping pins (these could be more, but not right now)
 
-		boolean analog_in[8]; // sets whether analog in on 
-		boolean analog_precision[8]; // sets whether analog 10 bit precision is on or not
+		bool analog_in[8]; // sets whether analog in on 
+		bool analog_precision[8]; // sets whether analog 10 bit precision is on or not
 
-		boolean pwm_on[6]; // sets whether pwm pin is on or not
+		bool pwm_on[6]; // sets whether pwm pin is on or not
 		static uint8_t pwm_pins[]; // = { 3,5,6, 8,9,10 };
-		int pwm_values[]; // = {0,0,0, 0,0,0};
+		uint8_t pwm_values[]; // = {0,0,0, 0,0,0};
 		
-		boolean digital_out[19]; // sets whether digital out on
-		int digital_values[19];
+		bool digital_out[19]; // sets whether digital out on
+		uint8_t digital_values[19];
 
-		boolean digital_in[19]; // sets whether digital in on
+		bool digital_in[19]; // sets whether digital in on
 		
 	// LIS302DL accelerometer addresses
 		#define accel1Address 0x1C
@@ -219,7 +236,7 @@ class MiniBee {
 		#define SENSING 1
 		#define WAITFORHOST 2
 		#define WAITFORCONFIG 3
-		
+		#define PAUSING 4
 
 // 	//listener functions
 // 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
