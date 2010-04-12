@@ -6,7 +6,7 @@
 
 
 void setup() {
-	Bee.begin(19200);
+  Bee.begin(57600);
 }
 
 void loop() {

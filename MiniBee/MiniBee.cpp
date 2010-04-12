@@ -46,6 +46,9 @@ MiniBee::MiniBee() {
 	msg_type = S_NO_MSG;
 
 	message = (char*)malloc(sizeof(char) * MAX_MESSAGE_SIZE);
+	
+	void (*customMsgFunc)(char *) = NULL;
+
 }
 
 MiniBee Bee = MiniBee();
@@ -152,6 +155,16 @@ void MiniBee::addCustomData( int * cdata ){
     datacount += 2;  
   }
 }
+
+void MiniBee::setCustomCall( void (*customFunc)(char * ) ){
+//    customMsgFunc = customFunc;
+  customMsgFunc = customFunc;
+ }
+
+// void MiniBee::customMsgFuncWrapper( void* mb, char* msg ){
+//   MiniBee * me = (MiniBee*) mb;
+//   me->parseCustomMsg( msg );
+// }
 
 /// read the serial number of the XBee
 void MiniBee::readXBeeSerial(void){
@@ -428,6 +441,11 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 			    setOutput();
 // 			    setPWM();
 // 			    setDigital();
+			}
+			break;
+		case S_CUSTOM:
+			if ( checkNodeMsg( msg[0], msg[1] ) ){
+			    this->customMsgFunc( msg );
 			}
 			break;
 // 		default:

@@ -1,7 +1,12 @@
+-- baudrates
+  - test maybe up to 57600...
 
-- more generalised interface to TWI/I2C... reading different addresses, different setups...
-
-- could have multiple ping pins, if more ultrasound sensors
-- use an interrupt and timer to measure ping time, instead of waiting.
-
--- waitForConfig not yet clean.... maybe just leave out... since it's waiting in the loop for serial data anyway...
+-- PING
+  - could have multiple ping pins, if more ultrasound sensors
+  - use an interrupt and timer to measure ping time, instead of waiting.
+  
+-- maybe integrate
+  - CapSense
+  - stepper motor
+  - LED matrix
+  - more generalised interface to TWI/I2C... reading different addresses, different setups...

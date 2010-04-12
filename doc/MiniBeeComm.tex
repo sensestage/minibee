@@ -45,19 +45,21 @@ Data output & 'O' & node ID + msg ID + N values & server\\
 Data & 'd' & node ID + msg ID + N values & node\\
 Loopback & 'L' & node ID + msg ID + onoff & server\\
 Running & 'R' & node ID + msg ID + onoff & server\\
+Custom message & 'E' & node ID + msg ID + (*data*) & server\\
 \hline
 Announce & 'A' &  & server \\
 Quit & 'Q' &  & server \\
-Serial number & 's' & Serial High (SH) + Serial Low (SL) + library version + board revision & node\\
+Serial number & 's' & Serial High (SH) + Serial Low (SL) +& \\
+			&	  & + library version + board revision & node\\
 ID assignment & 'I' & SH + SL + node ID + (*config ID*) & server \\
 Wait for config & 'w' & node ID + config ID & node \\
 Configuration & 'C' & config ID + configuration bytes & server \\
-Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + datasize + outsize + (*custom info*) & node \\
-(*custom info*) &  & N x (custom pin, data size) & \\
-
+Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + & \\
+                           &        & + datasize + outsize + (*custom*) & node \\
+(*custom*) &  & N x (custom pin, data size) & \\
 \hline
-"full package" (Chronotopia) & 'a' & 6 * 6 + 3 values & server \\
-"light" (PWM up to now)      & 'l' & node ID + 6 values & server
+% "full package" (Chronotopia) & 'a' & 6 * 6 + 3 values & server \\
+% "light" (PWM up to now)      & 'l' & node ID + 6 values & server
 \end{tabular}
 \end{center}
 \caption{Message protocol between host and MiniBee nodes. Type is preceded by the escape character (92), and messages are delimited with the delimiter character (10). Furthermore character 13 needs to be escaped as well. General convention: server message in capital, node message small.}
@@ -102,7 +104,8 @@ enum MiniBeePinConfig {
   AnalogIn, AnalogOut, AnalogIn10bit, 
   SHTClock, SHTData, 
   TWIClock, TWIData,
-  Ping
+  Ping,
+  Custom=100
 }
 \end{verbatim} 
 % \begin{center}

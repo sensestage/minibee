@@ -16,7 +16,6 @@
 #endif
 
 
-
 enum MiniBeePinConfig { 
   NotUsed,
   DigitalIn, DigitalOut,
@@ -28,21 +27,30 @@ enum MiniBeePinConfig {
   UnConfigured = 200
 };
 
+// typedef void ( *CustomMsgFunction)(const char*);
+
 // extern "C" {
 //  	void PCINT0_vect(void) __attribute__ ((signal));
 //  	void USART_RX_vect(void) __attribute__ ((signal));
 // }
 
+// void         ParseCustom(char * msg)  __attribute__((cdecl));     // GNU GCC
+
 class MiniBee {
 	public:
 		MiniBee();	//constructor
 
+		void (*customMsgFunc)(char *);// = NULL;
+		
+// 		void ParseCustom( char * msg ){ Serial.println( msg ); };
+		
 		void begin(int); //init function
 		void doLoopStep(void); // loop function
 		
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
 		void addCustomData( uint8_t * cdata );
 		void addCustomData( int * cdata );
+		void setCustomCall( void (*customFunc)(char * ) );
 	
 		void readXBeeSerial(void);
 
@@ -141,6 +149,7 @@ class MiniBee {
 		#define S_QUIT 'Q'
 		#define S_ID 'I'
 		#define S_CONFIG 'C'
+		#define S_CUSTOM 'E'
 // 		#define S_FULL 'a'
 // 		#define S_LIGHT 'l'
 		
@@ -255,6 +264,7 @@ class MiniBee {
 // 		void serialUpdate(void);
 // 		void (*sEvent)(void);
 // 		friend void USART_RX_vect(void);
+// 	static void customMsgFuncWrapper( void* mb, char* msg );
 };
 
 extern MiniBee Bee;	
