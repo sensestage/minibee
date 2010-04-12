@@ -24,6 +24,8 @@ MiniBee::MiniBee() {
 	    digital_in[i] = false;
 	    digital_out[i] = false;
 	    digital_values[i] = 0;
+	    custom_pin[i] = false;
+	    custom_size[i] = 0;
 	}
 	for ( i=0; i<6; i++ ){
 	    pwm_on[i] = false;
@@ -33,6 +35,8 @@ MiniBee::MiniBee() {
 	smpInterval = 50; // default value
 	msgInterval = 50;
 	samplesPerMsg = 1;
+	
+	customDataSize = 0;
 	
 	loopback = false;
 	
@@ -129,6 +133,25 @@ void MiniBee::doLoopStep(void){
   }
 }
 
+void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
+    custom_pin[id] = true;
+    custom_size[id] = size;
+    customDataSize += size;
+}
+
+void MiniBee::addCustomData( uint8_t * cdata ){
+  for ( i=0; i<customDataSize; i++){
+    data[datacount] = cdata[i];
+    datacount++;  
+  }
+}
+
+void MiniBee::addCustomData( int * cdata ){
+  for ( i=0; i<(customDataSize/2); i++){
+    dataFromInt( cdata[i], datacount );
+    datacount += 2;  
+  }
+}
 
 /// read the serial number of the XBee
 void MiniBee::readXBeeSerial(void){
@@ -577,71 +600,80 @@ void MiniBee::parseConfig(void){
 	samplesPerMsg = config[3];
 	for(i = 0;i < (CONFIG_BYTES-4);i++){
 	    pin = i + PINOFFSET;
-	    switch( config[i+4] ){
-	      case AnalogIn10bit:
-		if ( i >= ANAOFFSET ){
-		    analog_precision[i-ANAOFFSET] = true;
-		    analog_in[i-ANAOFFSET] = true;
-		    pinMode( pin, INPUT );
-		    datasize += 2;
-		}
-		break;
-	      case AnalogIn:
-		if ( i >= ANAOFFSET ){
-		    analog_precision[i-ANAOFFSET] = false;
-		    analog_in[i-ANAOFFSET] = true;
-		    pinMode( pin, INPUT );
-		    datasize += 1;
-		}
-		break;
-	      case DigitalIn:
-		pinMode( pin, INPUT );
-		digital_in[i] = true;
-		datasize += 1;
-		break;
-	      case AnalogOut:
-		for ( int j=0; j < 6; j++ ){
-		    if ( pwm_pins[j] == pin ){
-			pinMode( pin, OUTPUT );
-			pwm_on[j] = true;
-			datasizeout++;
-		    }
-		}
-		break;
-	      case DigitalOut:
-		digital_out[i] = true;
-		pinMode( pin, OUTPUT );
-		datasizeout++;
-		break;
-	      case SHTClock:
-		sht_pins[0] = pin;
-		shtOn = true;
-		pinMode( pin, OUTPUT );
-		break;
-	      case SHTData:
-		sht_pins[1] = pin;
-		shtOn = true;
-		pinMode( pin, OUTPUT );
-		datasize += 4;
-		break;
-	      case TWIClock:
-	      case TWIData:
-		twiOn = true;
-		datasize += 3;
-		break;
-	      case Ping:
-		pingOn = true;
-		ping_pin = pin;
-		datasize += 2;
-		break;
-	      case NotUsed:
-		break;
-	      case UnConfigured:
-		break;
+	    if ( custom_pin[i] ){
+	      config[i+4] = Custom;
+	    } else {
+	      switch( config[i+4] ){
+		case AnalogIn10bit:
+		  if ( i >= ANAOFFSET ){
+		      analog_precision[i-ANAOFFSET] = true;
+		      analog_in[i-ANAOFFSET] = true;
+		      pinMode( pin, INPUT );
+		      datasize += 2;
+		  }
+		  break;
+		case AnalogIn:
+		  if ( i >= ANAOFFSET ){
+		      analog_precision[i-ANAOFFSET] = false;
+		      analog_in[i-ANAOFFSET] = true;
+		      pinMode( pin, INPUT );
+		      datasize += 1;
+		  }
+		  break;
+		case DigitalIn:
+		  pinMode( pin, INPUT );
+		  digital_in[i] = true;
+		  datasize += 1;
+		  break;
+		case AnalogOut:
+		  for ( int j=0; j < 6; j++ ){
+		      if ( pwm_pins[j] == pin ){
+			  pinMode( pin, OUTPUT );
+			  pwm_on[j] = true;
+			  datasizeout++;
+		      }
+		  }
+		  break;
+		case DigitalOut:
+		  digital_out[i] = true;
+		  pinMode( pin, OUTPUT );
+		  datasizeout++;
+		  break;
+		case SHTClock:
+		  sht_pins[0] = pin;
+		  shtOn = true;
+		  pinMode( pin, OUTPUT );
+		  break;
+		case SHTData:
+		  sht_pins[1] = pin;
+		  shtOn = true;
+		  pinMode( pin, OUTPUT );
+		  datasize += 4;
+		  break;
+		case TWIClock:
+		case TWIData:
+		  twiOn = true;
+		  datasize += 3;
+		  break;
+		case Ping:
+		  pingOn = true;
+		  ping_pin = pin;
+		  datasize += 2;
+		  break;
+		case Custom:
+		  // pin is used in the custom part of the firmware
+		  custom_pin[i] = true;
+		  break;
+		case NotUsed:
+		  break;
+		case UnConfigured:
+		  break;
+	      }
 	    }
 	}
 	
 	datacount = 0;
+	datasize += customDataSize;
 	datasize = datasize * samplesPerMsg;
 
 // 	free(data);
@@ -663,15 +695,23 @@ void MiniBee::parseConfig(void){
 // 	    setupPing();
 // 	}
 	
-	char configInfo[7];
-	configInfo[0] = id;
-	configInfo[1] = config_id;
-	configInfo[2] = samplesPerMsg;
-	configInfo[3] = (uint8_t) (smpInterval/256);
-	configInfo[4] = (uint8_t) (smpInterval%256);
-	configInfo[5] = datasize;
-	configInfo[6] = datasizeout;
-	send( N_CONF, configInfo, 7 );
+// 	char configInfo[7];
+	uint8_t confSize = 7;
+	outMessage[0] = id;
+	outMessage[1] = config_id;
+	outMessage[2] = samplesPerMsg;
+	outMessage[3] = (uint8_t) (smpInterval/256);
+	outMessage[4] = (uint8_t) (smpInterval%256);
+	outMessage[5] = datasize;
+	outMessage[6] = datasizeout;
+	for ( i=0; i<19; i++){
+	  if ( custom_pin[i] ){
+	    outMessage[confSize] = i;
+	    outMessage[confSize+1] = custom_size[i];
+	    confSize += 2;
+	  }
+	}
+	send( N_CONF, outMessage, confSize );
 }
 
 //TWI --- for LIS302DL accelerometer

@@ -24,6 +24,7 @@ enum MiniBeePinConfig {
   SHTClock, SHTData, 
   TWIClock, TWIData,
   Ping,
+  Custom = 100,
   UnConfigured = 200
 };
 
@@ -38,6 +39,10 @@ class MiniBee {
 
 		void begin(int); //init function
 		void doLoopStep(void); // loop function
+		
+		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
+		void addCustomData( uint8_t * cdata );
+		void addCustomData( int * cdata );
 	
 		void readXBeeSerial(void);
 
@@ -217,7 +222,11 @@ class MiniBee {
 		uint8_t digital_values[19];
 
 		bool digital_in[19]; // sets whether digital in on
-		
+
+		bool custom_pin[19]; // sets whether custom pin is configured
+		uint8_t custom_size[19]; // sets size of custom pin data
+		uint8_t customDataSize;
+
 	// LIS302DL accelerometer addresses
 		#define accel1Address 0x1C
 		#define accelResultX 0x29

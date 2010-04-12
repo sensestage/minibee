@@ -52,7 +52,9 @@ Serial number & 's' & Serial High (SH) + Serial Low (SL) + library version + boa
 ID assignment & 'I' & SH + SL + node ID + (*config ID*) & server \\
 Wait for config & 'w' & node ID + config ID & node \\
 Configuration & 'C' & config ID + configuration bytes & server \\
-Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + datasize + outsize & node \\
+Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + datasize + outsize + (*custom info*) & node \\
+(*custom info*) &  & N x (custom pin, data size) & \\
+
 \hline
 "full package" (Chronotopia) & 'a' & 6 * 6 + 3 values & server \\
 "light" (PWM up to now)      & 'l' & node ID + 6 values & server
