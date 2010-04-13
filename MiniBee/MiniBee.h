@@ -1,20 +1,38 @@
 #ifndef MiniBee_h
 #define MiniBee_h
 
+#define MINIBEE_REVISION 'A'
+
+/// all together: 3644 bytes
+#define MINIBEE_ENABLE_TWI 1 /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_SHT 0 /// SHT takes up 1140 bytes
+#define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
+
+
 // #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <WProgram.h>
 // #include <EEPROM.h>
-// #include "../Wire/Wire.h"
-
 // #include <Wire.h>
 
 #define MINIBEE_LIBVERSION 1
+
 #ifndef MINIBEE_REVISION
 #define MINIBEE_REVISION 'A'
 #endif
 
+#ifndef MINIBEE_ENABLE_TWI
+#define MINIBEE_ENABLE_TWI 1
+#endif
+
+#ifndef MINIBEE_ENABLE_SHT
+#define MINIBEE_ENABLE_SHT 1
+#endif
+
+#ifndef MINIBEE_ENABLE_PING
+#define MINIBEE_ENABLE_PING 1
+#endif
 
 enum MiniBeePinConfig { 
   NotUsed,
@@ -27,14 +45,10 @@ enum MiniBeePinConfig {
   UnConfigured = 200
 };
 
-// typedef void ( *CustomMsgFunction)(const char*);
-
 // extern "C" {
 //  	void PCINT0_vect(void) __attribute__ ((signal));
 //  	void USART_RX_vect(void) __attribute__ ((signal));
 // }
-
-// void         ParseCustom(char * msg)  __attribute__((cdecl));     // GNU GCC
 
 class MiniBee {
 	public:
@@ -84,13 +98,16 @@ class MiniBee {
 
 	//twi
 		bool getFlagTWI();	//returns twi flag state
+#if MINIBEE_ENABLE_TWI == 1
 		void setupTWI(void);	//setup function for TWI
 		int readTWI(int, int);	//address, number of bytes;
 		int readTWI(int, int, int);	//address, register, number of bytes
 
 		void setupAccelleroTWI();
 		void readAccelleroTWI( int address, int dboff );
+#endif
 
+#if MINIBEE_ENABLE_SHT == 1
 	//sht
 		int ioSHT;
 		int ackSHT;
@@ -109,12 +126,15 @@ class MiniBee {
 		void readByteSHT(void);
 		int getStatusSHT(void);
 		int shiftInSHT(void);
-		
+#endif
+
+#if MINIBEE_ENABLE_PING == 1
 	//ping
 		bool getFlagPing();	//returns ping flag state
 		uint8_t getPinPing();	//returns the pins used for Ping
 // 		void setupPing(int*);	//setup function for Ping
 		int readPing(void);
+#endif
 
 		//listener function
 // 		void setupDigitalEvent(void (*event)(int, int));	//attach digital pin listener
@@ -140,8 +160,8 @@ class MiniBee {
 		
 		#define S_NO_MSG '0'
 		//server message types
-		#define S_PWM 'P'
-		#define S_DIGI 'D'
+// 		#define S_PWM 'P'
+// 		#define S_DIGI 'D'
 		#define S_OUT 'O'
 		#define S_RUN 'R'
 		#define S_LOOP 'L'
@@ -160,7 +180,6 @@ class MiniBee {
 		#define N_WAIT 'w'
 		#define N_CONF 'c'
 		
-		uint8_t mask;
 		uint8_t i;
 		uint8_t byte_index;
 		uint8_t escaping;
@@ -189,27 +208,23 @@ class MiniBee {
 		int smpInterval;
 		char *outMessage;
 
-		bool shtOn;
-		bool twiOn;
-		bool pingOn;
-		
 	//AT private commands
 		int atGetStatus(void);
 		void atSend(char *);
 		void atSend(char *, uint8_t);
-		
+
 	//msg with network
 		void slip(char);
-		void slipSoft(char);
+// 		void slipSoft(char);
 		bool checkNodeMsg( uint8_t nid, uint8_t mid );
 // 		boolean checkMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
-		
+
 	//config 
 		char *config; //array of pointers for all the config bytes
 		void writeConfig(char *); // eeprom write
 		void readConfig(void); // eeprom read
-		void readConfigMsg(char *); // assign config from msg
+// 		void readConfigMsg(char *); // assign config from msg
 		void parseConfig(void); // parse the config
 
 	// collecting sensor data:
@@ -217,8 +232,18 @@ class MiniBee {
 		char *data;
 		int datacount;
 
+		bool twiOn;
+
+#if MINIBEE_ENABLE_SHT == 1
+		uint8_t mask;
+		bool shtOn;
 		uint8_t sht_pins[2];	//scl, sda  clock, data
+#endif
+
+#if MINIBEE_ENABLE_PING == 1
+		bool pingOn;
 		uint8_t ping_pin;	//ping pins (these could be more, but not right now)
+#endif
 
 		bool analog_in[8]; // sets whether analog in on 
 		bool analog_precision[8]; // sets whether analog 10 bit precision is on or not
@@ -236,18 +261,22 @@ class MiniBee {
 		uint8_t custom_size[19]; // sets size of custom pin data
 		uint8_t customDataSize;
 
+#if MINIBEE_ENABLE_TWI == 1
 	// LIS302DL accelerometer addresses
 		#define accel1Address 0x1C
 		#define accelResultX 0x29
 		#define accelResultY 0x2B
 		#define accelResultZ 0x2D
+#endif
 
+#if MINIBEE_ENABLE_SHT == 1
 	// SHT sensor - See Sensirion Data sheet
 		#define  SHT_T_CMD  0x03                
 		#define  SHT_H_CMD  0x05
 		#define  SHT_R_STAT 0x07
 		#define  SHT_W_STAT 0x06
 		#define  SHT_RST_CMD 0x1E
+#endif
 
 	// state machine for the MiniBee...
 		#define STARTING 0

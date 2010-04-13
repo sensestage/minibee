@@ -1,5 +1,8 @@
 #include "MiniBee.h"
+
+#if MINIBEE_ENABLE_TWI == 1
 #include <Wire.h>
+#endif
 
 // #include <NewSoftSerial.h>
 
@@ -8,9 +11,15 @@ uint8_t MiniBee::pwm_pins[] = { 3,5,6, 8,9,10 };
 MiniBee::MiniBee() {
 // 	pwm_pins = { 3,5,6, 8,9,10 };
 	
+#if MINIBEE_ENABLE_SHT == 1
 	shtOn = false;
+#endif
+#if MINIBEE_ENABLE_TWI == 1
 	twiOn = false;
+#endif
+#if MINIBEE_ENABLE_PING == 1
 	pingOn = false;
+#endif
 	prev_msg = 0;
 	curSample = 0;
 	datacount = 0;
@@ -140,6 +149,11 @@ void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
     custom_pin[id] = true;
     custom_size[id] = size;
     customDataSize += size;
+    
+    char info [2];
+    info[0] = (char) id;
+    info[1] = (char) size;
+    send( N_INFO, info, 2 );
 }
 
 void MiniBee::addCustomData( uint8_t * cdata ){
@@ -528,11 +542,14 @@ uint8_t MiniBee::readSensors( uint8_t db ){
     }
     // read I2C/two wire interface accelero
     // TODO higher precision readings, we are now truncating to 8bit.
-    if ( twiOn ){
-      readAccelleroTWI( accel1Address, db );
-      db += 3;
-    }
-    
+#if MINIBEE_ENABLE_TWI == 1
+     if ( twiOn ){
+       readAccelleroTWI( accel1Address, db );
+       db += 3;
+     }
+#endif
+
+#if MINIBEE_ENABLE_SHT == 1
     // read SHT sensor
     if ( shtOn ){
       measureSHT( SHT_T_CMD );
@@ -542,12 +559,15 @@ uint8_t MiniBee::readSensors( uint8_t db ){
       dataFromInt( valSHT, db );
       db += 2;      
     }
-    
+#endif
+
+#if MINIBEE_ENABLE_PING == 1
     // read ultrasound sensor
     if ( pingOn ){
       dataFromInt( readPing(), db );
       db += 2;
     }
+#endif
     
     curSample++;
 //     datacount = db;
@@ -589,14 +609,14 @@ void MiniBee::writeConfig(char *msg) {
 	}
 }
 
-void MiniBee::readConfigMsg(char *msg){
-	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
-	for(i = 0;i < CONFIG_BYTES;i++){
-	   config[i] = msg[i];
-	}
-	parseConfig();
-	free(config);
-}
+// void MiniBee::readConfigMsg(char *msg){
+// 	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
+// 	for(i = 0;i < CONFIG_BYTES;i++){
+// 	   config[i] = msg[i];
+// 	}
+// 	parseConfig();
+// 	free(config);
+// }
 
 void MiniBee::readConfig(void) {
 	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
@@ -657,6 +677,7 @@ void MiniBee::parseConfig(void){
 		  pinMode( pin, OUTPUT );
 		  datasizeout++;
 		  break;
+#if MINIBEE_ENABLE_SHT == 1
 		case SHTClock:
 		  sht_pins[0] = pin;
 		  shtOn = true;
@@ -668,16 +689,21 @@ void MiniBee::parseConfig(void){
 		  pinMode( pin, OUTPUT );
 		  datasize += 4;
 		  break;
+#endif
+#if MINIBEE_ENABLE_TWI == 1
 		case TWIClock:
 		case TWIData:
 		  twiOn = true;
 		  datasize += 3;
 		  break;
+#endif
+#if MINIBEE_ENABLE_PING == 1
 		case Ping:
 		  pingOn = true;
 		  ping_pin = pin;
 		  datasize += 2;
 		  break;
+#endif
 		case Custom:
 		  // pin is used in the custom part of the firmware
 		  custom_pin[i] = true;
@@ -702,12 +728,16 @@ void MiniBee::parseConfig(void){
 	data = outMessage + 2*sizeof(char); // not sure if this is correct... test!!
 	smpInterval = msgInterval / samplesPerMsg;
 
+#if MINIBEE_ENABLE_TWI == 1
 	if ( twiOn ){
 	    setupAccelleroTWI();
 	}
+#endif
+#if MINIBEE_ENABLE_SHT == 1
 	if ( shtOn ){
 	    setupSHT();
 	}
+#endif
 	// no need to setup ping
 // 	if ( pingOn ){
 // 	    setupPing();
@@ -732,6 +762,7 @@ void MiniBee::parseConfig(void){
 	send( N_CONF, outMessage, confSize );
 }
 
+#if MINIBEE_ENABLE_TWI == 1
 //TWI --- for LIS302DL accelerometer
 bool MiniBee::getFlagTWI(void) { 
  	return twiOn;
@@ -811,7 +842,9 @@ int MiniBee::readTWI(int address, int reg, int bytes) {
 	}
 	return *twi_reading;
 }
+#endif
 
+#if MINIBEE_ENABLE_SHT == 1
 //SHT
 bool MiniBee::getFlagSHT(void) { 
     return shtOn;
@@ -930,7 +963,9 @@ int MiniBee::shiftInSHT(void) {
 	}
 	return cwt;
 }
+#endif
 
+#if MINIBEE_ENABLE_PING == 1
 //PING
 bool MiniBee::getFlagPing(void) { 
   return pingOn;
@@ -966,6 +1001,7 @@ int MiniBee::readPing(void) {
 	//max value is 30000 so easily fits in an int
 	return int(ping);
 }
+#endif
 
 // //**** EVENTS ****//
 // void MiniBee::setupDigitalEvent(void (*event)(int, int)) {

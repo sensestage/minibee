@@ -1,12 +1,11 @@
 // #include <EEPROM.h>
-#include <Wire.h>
 
-#define MINIBEE_REVISION 'A'
+#include <Wire.h>
 #include <MiniBee.h>
 
 
 void setup() {
-  Bee.begin(57600);
+  Bee.begin(19200);
 }
 
 void loop() {
