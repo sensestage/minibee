@@ -1,5 +1,6 @@
 -- baudrates
-  - test maybe up to 57600...
+--   - test maybe up to 57600...
+  + minibee without xbee yes, but with no...
 
 -- PING
   - could have multiple ping pins, if more ultrasound sensors
@@ -10,3 +11,29 @@
   - stepper motor
   - LED matrix
   - more generalised interface to TWI/I2C... reading different addresses, different setups...
+
+
+-- testing
+  + analogIn
+  + digitalIn
+  + SHT
+  + TWI
+  + Ping
+  + digitalOut
+  + PWM
+  + message 'R'
+  + message 'L'
+  - message 'M'
+  - custom message
+  + custom pins
+
+-- add in the version and revision info
+-- add a motor message ('M') and optional stepper motor control
+
+
+--- SuperCollider side
+  - gui bug for msg interval
+  - removeNode when changing config
+  - redundancy in sending id and config
+  - add in support for custom message sending
+  - add in support for custom data receiving

@@ -4,8 +4,8 @@
 #define MINIBEE_REVISION 'A'
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 1 /// TWI takes up 2064 bytes
-#define MINIBEE_ENABLE_SHT 0 /// SHT takes up 1140 bytes
+#define MINIBEE_ENABLE_TWI 0 /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_SHT 1 /// SHT takes up 1140 bytes
 #define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
 
 
@@ -160,8 +160,8 @@ class MiniBee {
 		
 		#define S_NO_MSG '0'
 		//server message types
-// 		#define S_PWM 'P'
-// 		#define S_DIGI 'D'
+		#define S_PWM 'P'
+		#define S_DIGI 'D'
 		#define S_OUT 'O'
 		#define S_RUN 'R'
 		#define S_LOOP 'L'
@@ -250,7 +250,7 @@ class MiniBee {
 
 		bool pwm_on[6]; // sets whether pwm pin is on or not
 		static uint8_t pwm_pins[]; // = { 3,5,6, 8,9,10 };
-		uint8_t pwm_values[]; // = {0,0,0, 0,0,0};
+		uint8_t pwm_values[6]; // = {0,0,0, 0,0,0};
 		
 		bool digital_out[19]; // sets whether digital out on
 		uint8_t digital_values[19];
@@ -260,6 +260,9 @@ class MiniBee {
 		bool custom_pin[19]; // sets whether custom pin is configured
 		uint8_t custom_size[19]; // sets size of custom pin data
 		uint8_t customDataSize;
+
+		#define PINOFFSET 3
+		#define ANAOFFSET 11
 
 #if MINIBEE_ENABLE_TWI == 1
 	// LIS302DL accelerometer addresses
@@ -283,7 +286,13 @@ class MiniBee {
 		#define SENSING 1
 		#define WAITFORHOST 2
 		#define WAITFORCONFIG 3
-		#define PAUSING 4
+		#define ACTING 4
+		#define PAUSING 5
+
+	bool hasInput; // = false;
+	bool hasOutput; // = false;
+	bool hasCustom; // = false;
+
 
 // 	//listener functions
 // 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
