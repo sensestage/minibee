@@ -153,8 +153,10 @@ void MiniBee::doLoopStep(void){
 }
 
 void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
-    custom_pin[id] = true;
-    custom_size[id] = size;
+  if ( id > PINOFFSET ){
+    custom_pin[id-PINOFFSET] = true;
+    custom_size[id-PINOFFSET] = size;
+  } // id's smaller than PINOFFSET allow for custom data without pin associated
     customDataSize += size;
     
     hasCustom = true;
@@ -613,11 +615,13 @@ uint8_t MiniBee::getId(void) {
 
 void MiniBee::sendSerialNumber(void){
 // 	int size = strlen(serial);
-// 	char * serdata = (char*)malloc(sizeof(char) * (size + 3) );
+// 	char * serdata = (char*)malloc(sizeof(char) * (size + 4) );
 // 	serdata = strcpy( serdata, serial );
 // 	serdata[ size ] = MINIBEE_LIBVERSION;
 // 	serdata[ size+1 ] = MINIBEE_REVISION;
-// 	serdata[ size+2 ] = '\0';
+//// 1 byte with data of capabilities that may be commented out in the firmware lib...
+// 	serdata[ size+2 ] = MINIBEE_ENABLE_PING*4 + MINIBEE_ENABLE_SHT*2 + MINIBEE_ENABLE_TWI;
+// 	serdata[ size+3 ] = '\0';
 // 	send(N_SER, serial, strlen(serdata) );
 // 	free( serdata );
 	send(N_SER, serial, strlen(serial) );
