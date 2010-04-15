@@ -4,9 +4,9 @@
 #define MINIBEE_REVISION 'A'
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 0 /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_TWI 1 /// TWI takes up 2064 bytes
 #define MINIBEE_ENABLE_SHT 1 /// SHT takes up 1140 bytes
-#define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
+#define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
 
 
 // #include <avr/interrupt.h>
