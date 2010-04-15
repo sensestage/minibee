@@ -60,7 +60,8 @@ class MiniBee {
 		
 		void begin(int); //init function
 		void doLoopStep(void); // loop function
-		
+
+		void setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n ); // sets pins to custom configuration
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
 		void addCustomData( uint8_t * cdata );
 		void addCustomData( int * cdata );

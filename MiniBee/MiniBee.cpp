@@ -152,6 +152,12 @@ void MiniBee::doLoopStep(void){
   }
 }
 
+void MiniBee::setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n  ){
+  for ( i=0; i<n; i++ ){
+    setCustomPin( ids[i], sizes[i] );
+  }
+}
+
 void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
   if ( id > PINOFFSET ){
     custom_pin[id-PINOFFSET] = true;
