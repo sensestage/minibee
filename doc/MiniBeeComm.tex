@@ -45,16 +45,16 @@ Data output & 'O' & node ID + msg ID + N values & server\\
 Data & 'd' & node ID + msg ID + N values & node\\
 Loopback & 'L' & node ID + msg ID + onoff & server\\
 Running & 'R' & node ID + msg ID + onoff & server\\
-Stepper motor & 'M' & node ID + msg ID + speed + direction + steps & server\\
+% Stepper motor & 'M' & node ID + msg ID + speed + direction + steps & server\\
 Custom message & 'E' & node ID + msg ID + (*data*) & server\\
 \hline
 Announce & 'A' &  & server \\
 Quit & 'Q' &  & server \\
 Serial number & 's' & Serial High (SH) + Serial Low (SL) +& \\
-			&	  & + library version + board revision & node\\
-ID assignment & 'I' & SH + SL + node ID + (*config ID*) & server \\
+			&	  & + library version + board revision + capabilities & node\\
+ID assignment & 'I' & msgID + SH + SL + node ID + (*config ID*) & server \\
 Wait for config & 'w' & node ID + config ID & node \\
-Configuration & 'C' & config ID + configuration bytes & server \\
+Configuration & 'C' & msg ID + config ID + configuration bytes & server \\
 Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + & \\
                            &        & + datasize + outsize + (*custom*) & node \\
 (*custom*) &  & N x (custom pin, data size) & \\
@@ -95,7 +95,7 @@ Confirm config & 'c' & node ID + config ID + smpMsg + msgInt + & \\
 msg time interval & 2 bytes (interval in ms) & & \\
 samples per message & 1 byte & & \\
 19 bytes pin configuration& & \\
-*motor steps & 2 bytes & \\
+% *motor steps & 2 bytes & \\
 \end{tabular}
 \end{center}
 
@@ -107,10 +107,11 @@ enum MiniBeePinConfig {
   SHTClock, SHTData, 
   TWIClock, TWIData,
   Ping,
-  StepMotorPin1, StepMotorPin2,
   Custom=100
 }
 \end{verbatim} 
+%   StepMotorPin1, StepMotorPin2,
+
 % \begin{center}
 % \begin{tabular}{llll}
 % msg time interval & 2 bytes (interval in ms) & & \\

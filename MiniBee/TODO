@@ -45,12 +45,12 @@
 
 
 --- SuperCollider side
-  - gui bug for msg interval
-  - removeNode when changing config
-  - redundancy in sending id and config
-  - add in support for custom message sending
-  - add in support for custom data receiving
-  - gui interface slightly wider to read names of configs
-  - status indicator for inactive
-  - update of gui when data starts flowing
-  - scrollview for the nodes
+  + gui bug for msg interval
+  + removeNode when changing config
+  + redundancy in sending id and config
+  + add in support for custom message sending
+  + add in support for custom data receiving
+  + gui interface slightly wider to read names of configs
+  + status indicator for inactive
+  + update of gui when data starts flowing
+  + scrollview for the nodes

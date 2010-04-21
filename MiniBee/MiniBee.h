@@ -2,11 +2,12 @@
 #define MiniBee_h
 
 #define MINIBEE_REVISION 'A'
+#define MINIBEE_LIBVERSION 1
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 0 /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_TWI 1 /// TWI takes up 2064 bytes
 #define MINIBEE_ENABLE_SHT 1 /// SHT takes up 1140 bytes
-#define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
+#define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
 
 
 // #include <avr/interrupt.h>
@@ -15,8 +16,6 @@
 #include <WProgram.h>
 // #include <EEPROM.h>
 // #include <Wire.h>
-
-#define MINIBEE_LIBVERSION 1
 
 #ifndef MINIBEE_REVISION
 #define MINIBEE_REVISION 'A'
@@ -60,7 +59,8 @@ class MiniBee {
 		
 		void begin(int); //init function
 		void doLoopStep(void); // loop function
-		
+
+		void setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n ); // sets pins to custom configuration
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
 		void addCustomData( uint8_t * cdata );
 		void addCustomData( int * cdata );
@@ -81,8 +81,8 @@ class MiniBee {
 	// set output pins
 		void setRunning( uint8_t ); 
 		void setLoopback( uint8_t ); 
-		void setPWM();
-		void setDigital();
+//		void setPWM();
+//		void setDigital();
 		void setOutput();
 	
 	// read input pins
@@ -160,8 +160,8 @@ class MiniBee {
 		
 		#define S_NO_MSG '0'
 		//server message types
-		#define S_PWM 'P'
-		#define S_DIGI 'D'
+//		#define S_PWM 'P'
+//		#define S_DIGI 'D'
 		#define S_OUT 'O'
 		#define S_RUN 'R'
 		#define S_LOOP 'L'
@@ -185,6 +185,8 @@ class MiniBee {
 		uint8_t escaping;
 		uint8_t id;
 		uint8_t config_id;
+		uint8_t prev_conf_msg;
+		uint8_t prev_id_msg;
 		uint8_t prev_msg;
 		char incoming;
 		char msg_type;
@@ -217,7 +219,8 @@ class MiniBee {
 		void slip(char);
 // 		void slipSoft(char);
 		bool checkNodeMsg( uint8_t nid, uint8_t mid );
-// 		boolean checkMsg( uint8_t mid );
+		bool checkConfMsg( uint8_t mid );
+		bool checkIDMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
 
 	//config 
