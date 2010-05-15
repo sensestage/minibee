@@ -67,19 +67,27 @@ MiniBee::MiniBee() {
 
 }
 
-MiniBee Bee = MiniBee();
+// MiniBee Bee = MiniBee();
+
+void MiniBee::openSerial(int baud_rate) {
+	Serial.begin(baud_rate);  
+}
+
+void MiniBee::configXBee(){
+	pinMode(XBEE_SLEEP_PIN, OUTPUT);
+	digitalWrite(XBEE_SLEEP_PIN, 0);  
+}
+
+void MiniBee::setID( uint8_t id ){
+    node_id = id;
+}
 
 void MiniBee::begin(int baud_rate) {
-	//config array, this should move to the firmware or something?
-	//id, twi, sht, ping, sht pins, 
-
-	Serial.begin(baud_rate);
+	openSerial(baud_rate);
 	delay(200);
-  	pinMode(XBEE_SLEEP_PIN, OUTPUT);
-  	digitalWrite(XBEE_SLEEP_PIN, 0);
-	delay(500);
 
-// 	send( N_INFO, "starting", 8 );
+	configXBee();
+	delay(500);
 
 	readXBeeSerial();
 	// allow some delay before sending data
@@ -87,11 +95,7 @@ void MiniBee::begin(int baud_rate) {
 
 	sendSerialNumber();
 
-// 	send(N_INFO, dest_addr );
-// 	send(N_INFO, my_addr );
-	
 	status = WAITFORHOST;
-// 	send( N_INFO, "waitforhost", 11 );
 }
 
 // void MiniBee::setSoftSerial(bool onoff, int baud_rate){
@@ -161,6 +165,14 @@ void MiniBee::setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n  ){
   }
 }
 
+void MiniBee::setCustomInput( uint8_t noInputs, uint8_t size ){
+  customInputs = noInputs;
+  customDataSize += noInputs * size;
+
+    hasCustom = true;
+    if ( size > 0 ){ hasInput = true; }
+}
+
 void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
   if ( id > PINOFFSET ){
     custom_pin[id-PINOFFSET] = true;
@@ -199,6 +211,10 @@ void MiniBee::setCustomCall( void (*customFunc)(char * ) ){
 //    customMsgFunc = customFunc;
   customMsgFunc = customFunc;
   hasOutput = true;
+}
+
+void MiniBee::setDataCall( void (*dataFunc)(char * ) ){
+  dataMsgFunc = dataFunc;  
 }
 
 // void MiniBee::customMsgFuncWrapper( void* mb, char* msg ){
@@ -365,8 +381,13 @@ void MiniBee::read() {
 }
 
 bool MiniBee::checkNodeMsg( uint8_t nid, uint8_t mid ){
-	bool res = ( (nid == id)  && ( mid != prev_msg) );
+	bool res = ( (nid == node_id)  && ( mid != prev_msg) );
 	prev_msg = mid;
+	return res;
+}
+
+bool MiniBee::checkNotNodeMsg( uint8_t nid ){
+	bool res = ( (nid != node_id) );
 	return res;
 }
 
@@ -416,12 +437,12 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 			  for(i = 0;i < len;i++){ ser[i] = msg[i+1]; }
 			  ser[len] = '\0';
 			  if(strcmp(ser, serial) == 0){
-			    id = msg[len+1];	//writeConfig(msg);
+			    node_id = msg[len+1];	//writeConfig(msg);
 			    if ( size == (len+3) ){
 			      config_id = msg[len+2];
 			      status = WAITFORCONFIG;
 			      char configInfo[2];
-			      configInfo[0] = id;
+			      configInfo[0] = node_id;
 			      configInfo[1] = config_id;
 			      send( N_WAIT, configInfo, 2 );
   // 			  send( N_INFO, "waitforconfig", 13 );
@@ -483,29 +504,18 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 		*/
 		case S_OUT:
 			if ( checkNodeMsg( msg[0], msg[1] ) ){
-			  i = 2;
-// 			    for( i=0; i< (size-2); i++){
-// 			    while( i < (size-2){
-			      for ( uint8_t j=0; j < 6; j++ ){
-				if ( pwm_on[j] ){
-				   pwm_values[j] = msg[i];
-				   i++;
-				}
-			      }
-			      for ( uint8_t j=0; j < 19; j++ ){
-				if ( digital_out[j] ){
-				   digital_values[j] = msg[i];
-				   i++;
-				}
-			      }
-			    setOutput();
-// 			    setPWM();
-// 			    setDigital();
+			  setOutputValues( msg, 2 );
+			  setOutput();
 			}
 			break;
 		case S_CUSTOM:
 			if ( checkNodeMsg( msg[0], msg[1] ) ){
 			    this->customMsgFunc( msg );
+			}
+			break;
+		case N_DATA:
+			if ( checkNotNodeMsg( msg[0] ) ){
+			    this->dataMsgFunc( msg );
 			}
 			break;
 // 		default:
@@ -546,6 +556,22 @@ void MiniBee::setDigital(){
 	} 
 }
 */
+
+void MiniBee::setOutputValues( char * msg, uint8_t offset ){
+  i = offset;
+  for ( uint8_t j=0; j < 6; j++ ){
+    if ( pwm_on[j] ){
+	pwm_values[j] = msg[i];
+	i++;
+    }
+  }
+  for ( uint8_t j=0; j < 19; j++ ){
+    if ( digital_out[j] ){
+	digital_values[j] = msg[i];
+	i++;
+	}
+  }
+}
 
 void MiniBee::setOutput(){
 	for( i=0; i<6; i++){
@@ -625,7 +651,7 @@ uint8_t MiniBee::readSensors( uint8_t db ){
 void MiniBee::sendData(void){
     msg_id_send++;
     msg_id_send = msg_id_send%256;
-    outMessage[0] = id;
+    outMessage[0] = node_id;
     outMessage[1] = msg_id_send;
 //     for ( i=0; i < datacount; i++ ){
 // 	outMessage[i+2] = data[i];
@@ -634,7 +660,7 @@ void MiniBee::sendData(void){
 }
 
 uint8_t MiniBee::getId(void) { 
-	return id;
+	return node_id;
 }
 
 void MiniBee::sendSerialNumber(void){
@@ -659,14 +685,14 @@ void MiniBee::writeConfig(char *msg) {
 	}
 }
 
-// void MiniBee::readConfigMsg(char *msg){
-// 	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
-// 	for(i = 0;i < CONFIG_BYTES;i++){
-// 	   config[i] = msg[i];
-// 	}
-// 	parseConfig();
-// 	free(config);
-// }
+void MiniBee::readConfigMsg(char *msg){
+	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
+	for(i = 0;i < CONFIG_BYTES;i++){
+	   config[i] = msg[i+1];
+	}
+	parseConfig();
+	free(config);
+}
 
 void MiniBee::readConfig(void) {
 	config = (char*)malloc(sizeof(char) * CONFIG_BYTES);
@@ -799,15 +825,17 @@ void MiniBee::parseConfig(void){
 // 	    setupPing();
 // 	}
 	
-	char * configInfo = (char*)malloc( sizeof(char) * (19*2 + 7) );
-	uint8_t confSize = 7;
-	configInfo[0] = id;
+	uint8_t confSize = 9;
+	char * configInfo = (char*)malloc( sizeof(char) * (19*2 + confSize) );
+	configInfo[0] = node_id;
 	configInfo[1] = config_id;
 	configInfo[2] = samplesPerMsg;
 	configInfo[3] = (uint8_t) (smpInterval/256);
 	configInfo[4] = (uint8_t) (smpInterval%256);
 	configInfo[5] = datasize;
 	configInfo[6] = datasizeout;
+	configInfo[7] = customInputs;
+	configInfo[8] = customSize;
 	for ( i=0; i<19; i++){
 	  if ( custom_pin[i] ){
 	    configInfo[confSize] = i;

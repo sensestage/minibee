@@ -5,10 +5,9 @@
 #define MINIBEE_LIBVERSION 1
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 1 /// TWI takes up 2064 bytes
-#define MINIBEE_ENABLE_SHT 1 /// SHT takes up 1140 bytes
+#define MINIBEE_ENABLE_TWI 1  /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_SHT 1  /// SHT takes up 1140 bytes
 #define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
-
 
 // #include <avr/interrupt.h>
 #include <avr/eeprom.h>
@@ -54,6 +53,7 @@ class MiniBee {
 		MiniBee();	//constructor
 
 		void (*customMsgFunc)(char *);// = NULL;
+		void (*dataMsgFunc)(char *);// = NULL;
 		
 // 		void ParseCustom( char * msg ){ Serial.println( msg ); };
 		
@@ -62,11 +62,20 @@ class MiniBee {
 
 		void setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n ); // sets pins to custom configuration
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
+		void setCustomInput( uint8_t noInputs, uint8_t size );
 		void addCustomData( uint8_t * cdata );
 		void addCustomData( int * cdata );
 		void setCustomCall( void (*customFunc)(char * ) );
-	
+
+		void setDataCall( void (*dataFunc)(char * ) );
+
 		void readXBeeSerial(void);
+		
+		void openSerial(int);
+		void configXBee();
+
+		void readConfigMsg(char *); // assign config from msg
+		void setID( uint8_t id );
 
 	//AT CMD (communicate with XBee)
 		int atEnter(void);
@@ -84,6 +93,7 @@ class MiniBee {
 //		void setPWM();
 //		void setDigital();
 		void setOutput();
+		void setOutputValues( char * msg, uint8_t offset );
 	
 	// read input pins
 		uint8_t readSensors( uint8_t );
@@ -183,7 +193,7 @@ class MiniBee {
 		uint8_t i;
 		uint8_t byte_index;
 		uint8_t escaping;
-		uint8_t id;
+		uint8_t node_id;
 		uint8_t config_id;
 		uint8_t prev_conf_msg;
 		uint8_t prev_id_msg;
@@ -219,6 +229,7 @@ class MiniBee {
 		void slip(char);
 // 		void slipSoft(char);
 		bool checkNodeMsg( uint8_t nid, uint8_t mid );
+		bool checkNotNodeMsg( uint8_t nid );
 		bool checkConfMsg( uint8_t mid );
 		bool checkIDMsg( uint8_t mid );
 		void routeMsg(char, char*, uint8_t);
@@ -227,7 +238,6 @@ class MiniBee {
 		char *config; //array of pointers for all the config bytes
 		void writeConfig(char *); // eeprom write
 		void readConfig(void); // eeprom read
-// 		void readConfigMsg(char *); // assign config from msg
 		void parseConfig(void); // parse the config
 
 	// collecting sensor data:
@@ -296,6 +306,8 @@ class MiniBee {
 	bool hasOutput; // = false;
 	bool hasCustom; // = false;
 
+	uint8_t customInputs;
+	uint8_t customSize;
 
 // 	//listener functions
 // 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
@@ -308,6 +320,6 @@ class MiniBee {
 // 	static void customMsgFuncWrapper( void* mb, char* msg );
 };
 
-extern MiniBee Bee;	
+// extern MiniBee Bee;	
 
 #endif	
