@@ -5,9 +5,9 @@
 #define MINIBEE_LIBVERSION 1
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 1  /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_TWI 0  /// TWI takes up 2064 bytes
 #define MINIBEE_ENABLE_SHT 1  /// SHT takes up 1140 bytes
-#define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
+#define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
 
 // #include <avr/interrupt.h>
 #include <avr/eeprom.h>
@@ -64,6 +64,7 @@ class MiniBee {
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
 		void setCustomInput( uint8_t noInputs, uint8_t size );
 		void addCustomData( uint8_t * cdata );
+		void addCustomData( char * cdata );
 		void addCustomData( int * cdata );
 		void setCustomCall( void (*customFunc)(char * ) );
 
@@ -76,6 +77,8 @@ class MiniBee {
 
 		void readConfigMsg(char *); // assign config from msg
 		void setID( uint8_t id );
+		char * getData();
+		int dataSize();
 
 	//AT CMD (communicate with XBee)
 		int atEnter(void);
@@ -244,6 +247,7 @@ class MiniBee {
 		void dataFromInt( int output, int offset );
 		char *data;
 		int datacount;
+		int datasize;
 
 		bool twiOn;
 
@@ -263,10 +267,10 @@ class MiniBee {
 
 		bool pwm_on[6]; // sets whether pwm pin is on or not
 		static uint8_t pwm_pins[]; // = { 3,5,6, 8,9,10 };
-		uint8_t pwm_values[6]; // = {0,0,0, 0,0,0};
+		char pwm_values[6]; // = {0,0,0, 0,0,0};
 		
 		bool digital_out[19]; // sets whether digital out on
-		uint8_t digital_values[19];
+		char digital_values[19];
 
 		bool digital_in[19]; // sets whether digital in on
 

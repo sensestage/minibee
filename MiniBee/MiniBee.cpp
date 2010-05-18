@@ -82,6 +82,14 @@ void MiniBee::setID( uint8_t id ){
     node_id = id;
 }
 
+char * MiniBee::getData(){
+    return data;
+}
+
+int MiniBee::dataSize(){
+    return datasize;
+}
+
 void MiniBee::begin(int baud_rate) {
 	openSerial(baud_rate);
 	delay(200);
@@ -190,6 +198,15 @@ void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
 }
 
 void MiniBee::addCustomData( uint8_t * cdata ){
+  if ( status == SENSING ){
+    for ( i=0; i<customDataSize; i++){
+      data[datacount] = (char) cdata[i];
+      datacount++;  
+    }
+  }
+}
+
+void MiniBee::addCustomData( char * cdata ){
   if ( status == SENSING ){
     for ( i=0; i<customDataSize; i++){
       data[datacount] = cdata[i];
@@ -692,6 +709,11 @@ void MiniBee::readConfigMsg(char *msg){
 	}
 	parseConfig();
 	free(config);
+	if ( hasInput ){
+	    status = SENSING;
+	} else if ( hasOutput ){
+	    status = ACTING;
+	}
 }
 
 void MiniBee::readConfig(void) {
@@ -702,9 +724,9 @@ void MiniBee::readConfig(void) {
 }
 
 void MiniBee::parseConfig(void){
-	int datasize = 0;
 	uint8_t pin = 0;
 	int datasizeout = 0;
+	datasize = 0;
 
 	free(outMessage);
 
