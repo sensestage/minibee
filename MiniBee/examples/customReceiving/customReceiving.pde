@@ -11,6 +11,8 @@
 /// our motor has 7.5 degree steps, so 48 per full rotation
 #define STEPS 48
 
+MiniBee Bee = MiniBee();
+
 /// stepper motor will be attached to pin 12 and 13
 Stepper stepper(STEPS, 12, 13);
 

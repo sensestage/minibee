@@ -9,6 +9,8 @@
 /// not supported by default in our library
 #include <CapSense.h>
 
+MiniBee Bee = MiniBee();
+
 /// using pin 10 as send pin, and pins 11, 12 and 13 as sensing pins
  // 10M resistor between pins 4 & 6, pin 6 is sensor pin, add a wire and or foil
  CapSense   cs_10_11 = CapSense(10,11);       
@@ -42,7 +44,7 @@ void loop() {
   total[2] =  cs_10_13.capSense(30);
 
   for ( uint8_t j=0; j<3; j++ ){
-    capData[0] = (int) total[0];
+    capData[j] = (int) total[j];
   }
   // add our customly measured data to the data package:
   Bee.addCustomData( capData );
