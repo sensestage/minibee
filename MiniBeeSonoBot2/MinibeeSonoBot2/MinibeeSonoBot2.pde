@@ -1,6 +1,8 @@
 
 #include <MiniBee.h>
 
+MiniBee Bee = MiniBee();
+
 /// multiplexing with 2 CD4052's to get 16 light inputs from 4 analog inputs
 /// D12, D13    - controlling multiplexer
 /// A0,A1,A2,A3 - reading in analog data
