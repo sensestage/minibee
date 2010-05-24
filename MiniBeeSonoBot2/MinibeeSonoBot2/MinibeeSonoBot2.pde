@@ -111,7 +111,7 @@ void loop() {
   }
 
   // add our customly measured data to the data package:
-  Bee.addCustomData( lights );
+  Bee.addCustomData( lights, 16 );
  // do a loop step of the remaining firmware:
   Bee.doLoopStep();
 }
