@@ -51,6 +51,7 @@ MiniBee::MiniBee() {
 	customDataSize = 0;
 	
 	loopback = false;
+	remoteConfig = true;
 	
 // 	useSoftSerial = false;
 
@@ -440,56 +441,64 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 
 	switch(type) {
 		case S_ANN:
-			sendSerialNumber();
-			status = WAITFORHOST;
-// 			send( N_INFO, "waitforhost", 11 );
+			if ( remoteConfig ){
+			  sendSerialNumber();
+			  status = WAITFORHOST;
+  // 			send( N_INFO, "waitforhost", 11 );
+			}
 			break;
 		case S_QUIT:
-			status = WAITFORHOST;
+			if ( remoteConfig ){
+			  status = WAITFORHOST;
 			//do something to stop doing anything
+			}
 // 			send( N_INFO, "waitforhost", 11 );
 			break;
 		case S_ID:
-			if ( checkIDMsg( msg[0] ) ){
-			  len = strlen(serial);
-			  ser = (char *)malloc(sizeof(char)* (len + 1 ) );
-			  for(i = 0;i < len;i++){ ser[i] = msg[i+1]; }
-			  ser[len] = '\0';
-			  if(strcmp(ser, serial) == 0){
-			    node_id = msg[len+1];	//writeConfig(msg);
-			    if ( size == (len+3) ){
-			      config_id = msg[len+2];
-			      status = WAITFORCONFIG;
-			      char configInfo[2];
-			      configInfo[0] = node_id;
-			      configInfo[1] = config_id;
-			      send( N_WAIT, configInfo, 2 );
-  // 			  send( N_INFO, "waitforconfig", 13 );
-			    } else if ( size == (len+2) ) {
-			      readConfig();
-			      status = SENSING;
-  // 				send( N_INFO, "sensing", 7 );
+			if ( remoteConfig ){
+			  if ( checkIDMsg( msg[0] ) ){
+			    len = strlen(serial);
+			    ser = (char *)malloc(sizeof(char)* (len + 1 ) );
+			    for(i = 0;i < len;i++){ ser[i] = msg[i+1]; }
+			    ser[len] = '\0';
+			    if(strcmp(ser, serial) == 0){
+			      node_id = msg[len+1];	//writeConfig(msg);
+			      if ( size == (len+3) ){
+				config_id = msg[len+2];
+				status = WAITFORCONFIG;
+				char configInfo[2];
+				configInfo[0] = node_id;
+				configInfo[1] = config_id;
+				send( N_WAIT, configInfo, 2 );
+    // 			  send( N_INFO, "waitforconfig", 13 );
+			      } else if ( size == (len+2) ) {
+				readConfig();
+				status = SENSING;
+    // 				send( N_INFO, "sensing", 7 );
+			      }
+    // 			  } else {
+    // 			      send( N_INFO, "wrong serial number", 19 );
+    // 			      send( N_INFO, ser, len );
 			    }
-  // 			  } else {
-  // 			      send( N_INFO, "wrong serial number", 19 );
-  // 			      send( N_INFO, ser, len );
+			    free(ser);
 			  }
-			  free(ser);
 			}
 			break;
 		case S_CONFIG:
-		      // check if right config_id:
-		      if ( checkConfMsg( msg[0] ) ){
-			if ( msg[1] == config_id ){
-			  writeConfig( msg );
-			  readConfig();
-// 			readConfigMsg( msg );
-			  if ( hasInput ){
-			    status = SENSING;
-			  } else if ( hasOutput ){
-			    status = ACTING;
+		      if ( remoteConfig ){
+			// check if right config_id:
+			if ( checkConfMsg( msg[0] ) ){
+			  if ( msg[1] == config_id ){
+			    writeConfig( msg );
+			    readConfig();
+  // 			readConfigMsg( msg );
+			    if ( hasInput ){
+			      status = SENSING;
+			    } else if ( hasOutput ){
+			      status = ACTING;
+			    }
+  // 			send( N_INFO, "sensing", 7 );
 			  }
-// 			send( N_INFO, "sensing", 7 );
 			}
 		      }
 		      break;
@@ -540,6 +549,10 @@ void MiniBee::routeMsg(char type, char *msg, uint8_t size) {
 // 		default:
 // 			break;
 		}
+}
+
+void MiniBee::setRemoteConfig( bool onoff ){
+    remoteConfig = onoff;
 }
 
 void MiniBee::setRunning( uint8_t onoff ){
