@@ -1,5 +1,5 @@
 #include <MiniBee.h>
-#include <Wire.h>
+// #include <Wire.h>
 
 MiniBee Bee = MiniBee();
 
@@ -18,8 +18,8 @@ char pwmVals[3] = {0,0,0}; // the current pwm values
 int maxVals[3] = { 255,255,255 };
 int minVals[3] = { 0,0,0 };
 
-uint8_t lids = {0,1,2};
-uint8_t old_lids = {0,1,2};
+uint8_t lids[] = {0,1,2};
+uint8_t old_lids[] = {0,1,2};
 
 char onoffLimit = 1;
 
@@ -28,8 +28,8 @@ int mainCnt = 0;
 int msgCnt = 0;
 
 int fadeVals[3] = {0,0,0};
-int fadeSteps[3] = {0,0,0};
-int fadeIncs[3] = { 2,4,10 };
+int fadeStep[3] = {0,0,0};
+int fadeInc[3] = { 2,4,10 };
 
 char state[3] = { 0, 0, 0 }; // 0: fading, 1: at min, 2: at max
 int timecounter[3] = {0,0,0};
@@ -69,6 +69,7 @@ void dataMsgParser( char * msg ){
 }
 
 void setup() {
+  Bee.setRemoteConfig( false );
   Bee.openSerial(19200);
   Bee.configXBee();
   
@@ -98,28 +99,30 @@ void setup() {
 }
 
 void mimicBee( uint8_t bid ){
-    for ( uint8_t i=0; i < 3; i++ ){
-      pwmVals[i] = 0;
-    }
-    Bee.setOutputValues( pwmVals, 0 );
-    Bee.setOutput();
-    delay(300);
-    
     if ( otherThere[bid] ){
       for ( uint8_t i=0; i < 3; i++ ){
-	pwmVals[i] = otherData[ bid*11 + 2 + i ];
+	pwmVals[i] = 0;
       }
-    }
-    Bee.setOutputValues( pwmVals, 0 );
-    Bee.setOutput();
-    delay(3000);
+      Bee.setOutputValues( pwmVals, 0 );
+      Bee.setOutput();
+      delay(300);
+      
+      
+	for ( uint8_t i=0; i < 3; i++ ){
+	  pwmVals[i] = otherData[ bid*11 + 2 + i ];
+	}
 
-    for ( uint8_t i=0; i < 3; i++ ){
-      pwmVals[i] = 0;
+      Bee.setOutputValues( pwmVals, 0 );
+      Bee.setOutput();
+      delay(3000);
+
+      for ( uint8_t i=0; i < 3; i++ ){
+	pwmVals[i] = 0;
+      }
+      Bee.setOutputValues( pwmVals, 0 );
+      Bee.setOutput();
+      delay(300);
     }
-    Bee.setOutputValues( pwmVals, 0 );
-    Bee.setOutput();
-    delay(300);
 }
 
 int clip( int in, int min, int max ){
@@ -133,6 +136,7 @@ int clip( int in, int min, int max ){
 
 void loop() {
   int fadeSum;
+  int lightCumSum;
 
   for ( uint8_t i=0; i < 3; i++ ){
     msgVals[i]   = pwmVals[i];
@@ -140,7 +144,7 @@ void loop() {
     msgVals[i+6] = maxVals[i];
   }
   
-  Bee.addCustomData( msgVals );
+  Bee.addCustomData( msgVals, 9 );
 
   /// this does the sensing, and the serial receiving, and the N ms waiting
   Bee.doLoopStep();
@@ -151,6 +155,7 @@ void loop() {
 
   if ( msgCnt > (10*20 + myData[0] + myData[1] ) ){
     mimicBee( lastOther );
+    msgCnt = 0;
     // to add, get closer to their min/max values
   }
 
@@ -161,20 +166,23 @@ void loop() {
   mainCnt++;
   
   if ( mainCnt%100 == 0 ){
-    if ( (lightCum[0] + lightCum[1]) < 30 ){ // dark
+    lightCumSum = lightCum[0] + lightCum[1];
+    if ( lightCumSum < 30 ){ // dark
         for ( uint8_t i=0; i < 3; i++ ){
 	  minVals[i]++; 
 	  maxVals[i]++;
+	  minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
+	  maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
 	}
     }
-    if ( lightCum.sum > 400 ){ // very bright
+    if ( lightCumSum > 400 ){ // very bright
         for ( uint8_t i=0; i < 3; i++ ){
 	  minVals[i]--; 
 	  maxVals[i]--;
+	  minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
+	  maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
 	}
     }
-    minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
-    maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
   }
 
   fadeSum = fadeVals[0] + fadeVals[1] + fadeVals[2];
@@ -183,16 +191,16 @@ void loop() {
       old_lids[i] = lids[i];
     }
     if ( lightCum[1] - lightCum[0] > 0 ){
-      ids[0] = old_lids[1];
-      ids[1] = old_lids[2];
-      ids[2] = old_lids[0];
+      lids[0] = old_lids[1];
+      lids[1] = old_lids[2];
+      lids[2] = old_lids[0];
     } else {
-      ids[0] = old_lids[2];
-      ids[1] = old_lids[0];
-      ids[2] = old_lids[1];
+      lids[0] = old_lids[2];
+      lids[1] = old_lids[0];
+      lids[2] = old_lids[1];
     }
     mainCnt = 0;
-    lightCum = [0,0];
+    lightCum[0] = 0; lightCum[1] = 0;
   }
 
   for ( uint8_t i=0; i < 3; i++ ){
