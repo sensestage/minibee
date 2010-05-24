@@ -11,20 +11,31 @@ char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt
 
 uint8_t myID = 0; // my id
 
-char fadeVals[3] = {0,0,0}; // the current pwm values
+char msgVals[9] = {0,0,0,0,0,0,255,255,255}; // the current pwm values
+
 char pwmVals[3] = {0,0,0}; // the current pwm values
 
-char maxVals[3] = { 255,255,255 };
-char minVals[3] = { 0,0,0 };
-int stepVals[3] = { 2, 2, 2 };
+int maxVals[3] = { 255,255,255 };
+int minVals[3] = { 0,0,0 };
+
+uint8_t lids = {0,1,2};
+uint8_t old_lids = {0,1,2};
+
+char onoffLimit = 1;
+
+int lightCum[2] = {0,0};
+int mainCnt = 0;
+int msgCnt = 0;
+
+int fadeVals[3] = {0,0,0};
+int fadeSteps[3] = {0,0,0};
+int fadeIncs[3] = { 2,4,10 };
 
 char state[3] = { 0, 0, 0 }; // 0: fading, 1: at min, 2: at max
 int timecounter[3] = {0,0,0};
 
-int incVals[3] = { 1,2,3 };
-
-int maxTime[3] = { 2000, 500, 300 };
-int midTime[3] = { 1000, 250, 150 };
+int maxTime[3] = { 1000, 300, 100 };
+int midTime[3] = {  500, 150,  50 };
 
 enum LightState {
   fading,
@@ -32,11 +43,11 @@ enum LightState {
   atMax
 };
 
-char onoffLimit = 1;
 
-
-uint8_t prev_msg[] = {0,0,0,0, 0,0,0,0}; // previous message ids from other nodes
+uint8_t prev_msg[12] = {0, 0,0, 0,0,0, 0,0,0, 0,0,0}; // previous message ids from other nodes
 bool otherThere[] = {false, false, false, false, false, false, false, false}; // whether others are there
+
+uint8_t lastOther = 0;
 
 uint8_t * otherData; 
 char * myData;
@@ -49,9 +60,10 @@ void dataMsgParser( char * msg ){
     prev_msg[msgSrc] = msgID;
     // this other minibee is there:
     otherThere[msgSrc] = true;
+    lastOther = msgSrc;
     // copy the data to the array with "other data"
     for ( uint8_t j=0; j<5; j++ ){
-      otherData[ msgSrc*5 + j ] = msg[ j+2 ];
+      otherData[ msgSrc*11 + j ] = msg[ j+2 ];
     }
   }
 }
@@ -64,7 +76,7 @@ void setup() {
   uint8_t csizes [] = {0,0,0};
 
   Bee.setCustomPins( cpins, csizes, 3 ); // our id pins
-  Bee.setCustomInput( 3, 1 ); // our current PWM values
+  Bee.setCustomInput( 9, 1 ); // our current PWM values, min and max values
   
   for ( uint8_t i=0; i < 3; i++ ){
       pinMode( cpins[i], INPUT );
@@ -77,7 +89,7 @@ void setup() {
   Bee.setID( myID );
   
   /// allocate an array for the data from up to 8 other nodes:
-  otherData = (uint8_t *)malloc(sizeof(uint8_t)* 5*8) ;
+  otherData = (uint8_t *)malloc(sizeof(uint8_t)* 11*8) ;
 
   /// setting our own data parser to receive data from other nodes:
   Bee.setDataCall( dataMsgParser );
@@ -85,80 +97,129 @@ void setup() {
   Bee.readConfigMsg( myConfig );
 }
 
+void mimicBee( uint8_t bid ){
+    for ( uint8_t i=0; i < 3; i++ ){
+      pwmVals[i] = 0;
+    }
+    Bee.setOutputValues( pwmVals, 0 );
+    Bee.setOutput();
+    delay(300);
+    
+    if ( otherThere[bid] ){
+      for ( uint8_t i=0; i < 3; i++ ){
+	pwmVals[i] = otherData[ bid*11 + 2 + i ];
+      }
+    }
+    Bee.setOutputValues( pwmVals, 0 );
+    Bee.setOutput();
+    delay(3000);
+
+    for ( uint8_t i=0; i < 3; i++ ){
+      pwmVals[i] = 0;
+    }
+    Bee.setOutputValues( pwmVals, 0 );
+    Bee.setOutput();
+    delay(300);
+}
+
+int clip( int in, int min, int max ){
+  if ( in < min ){
+    in = min;
+  } else if ( in > max ){
+    in = max;
+  }
+  return in;
+}
+
 void loop() {
-   for ( uint8_t i=0; i < 3; i++ ){
-      timecounter[i]++;
-   }
-   
-  Bee.addCustomData( pwmVals );
+  int fadeSum;
+
+  for ( uint8_t i=0; i < 3; i++ ){
+    msgVals[i]   = pwmVals[i];
+    msgVals[i+3] = minVals[i];
+    msgVals[i+6] = maxVals[i];
+  }
+  
+  Bee.addCustomData( msgVals );
 
   /// this does the sensing, and the serial receiving, and the N ms waiting
   Bee.doLoopStep();
 
   myData = Bee.getData();
-  // update State
-  updateState();
-  // update current values of pwm
-  updatePWM();
+
+  msgCnt++;
+
+  if ( msgCnt > (10*20 + myData[0] + myData[1] ) ){
+    mimicBee( lastOther );
+    // to add, get closer to their min/max values
+  }
+
+  for ( uint8_t i=0; i < 2; i++ ){
+    lightCum[i] = (lightCum[i] + myData[i])/2;
+  }
+
+  mainCnt++;
+  
+  if ( mainCnt%100 == 0 ){
+    if ( (lightCum[0] + lightCum[1]) < 30 ){ // dark
+        for ( uint8_t i=0; i < 3; i++ ){
+	  minVals[i]++; 
+	  maxVals[i]++;
+	}
+    }
+    if ( lightCum.sum > 400 ){ // very bright
+        for ( uint8_t i=0; i < 3; i++ ){
+	  minVals[i]--; 
+	  maxVals[i]--;
+	}
+    }
+    minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
+    maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
+  }
+
+  fadeSum = fadeVals[0] + fadeVals[1] + fadeVals[2];
+  if ( ( (fadeSum > 1200) || (fadeSum < 60) ) && (mainCnt > 300) ){
+    for ( uint8_t i=0; i < 3; i++ ){
+      old_lids[i] = lids[i];
+    }
+    if ( lightCum[1] - lightCum[0] > 0 ){
+      ids[0] = old_lids[1];
+      ids[1] = old_lids[2];
+      ids[2] = old_lids[0];
+    } else {
+      ids[0] = old_lids[2];
+      ids[1] = old_lids[0];
+      ids[2] = old_lids[1];
+    }
+    mainCnt = 0;
+    lightCum = [0,0];
+  }
+
+  for ( uint8_t i=0; i < 3; i++ ){
+     timecounter[i]++;
+     if ( timecounter[i] == 1 ){
+       fadeStep[i] = fadeInc[i];
+     } else if ( timecounter[i] == midTime[i] ){
+       fadeStep[i] = -1*fadeInc[i];
+     } else if ( timecounter[i] > maxTime[i] ){
+       timecounter[i] = 0;
+     }
+     fadeVals[i] = fadeVals[i] + fadeStep[i];
+     if ( fadeVals[i] < minVals[i] ){ // clip low
+       fadeVals[i] = minVals[i];
+       state[i] = atMin;
+     }{ 
+       if ( fadeVals[i] > maxVals[i] ){ // clip high
+	 fadeVals[i] = maxVals[i];
+	 state[i] = atMax;
+       }{
+	 state[i] = fading;
+       }
+     }
+     // update the PWM value
+     pwmVals[i] = fadeVals[i]/2;
+  }
+
   Bee.setOutputValues( pwmVals, 0 );
   Bee.setOutput();
-}
-
-void updateState(){
-  /// update according to time:
-  for ( uint8_t i=0; i < 3; i++ ){ 
-      if ( timecounter[i] == 1 ){
-	// update direction
-	stepVals[i] = incVals[i];
-	fadeVals[i] = minVals[i];
-      } else if ( timecounter[i] == midTime[i] ){
-	// update direction
-	stepVals[i] = -1 * incVals[i];
-	fadeVals[i] = maxVals[i];
-      } else if ( timecounter[i] > maxTime[i] ){
-	timecounter[i]= 0;
-      }
-  }
-//   if ( myData[3] < 100 ){
-//       incVals[1] = 4;
-//       maxTime[1] = 200;
-//       midTime[1] = 100;
-//   }
-//   if ( myData[3] > 100 ){
-//       incVals[1] = 2;
-//       maxTime[1] = 500;
-//       midTime[1] = 250;
-//   }
-//   if ( myData[4] < 100 ){
-//       incVals[2] = 2;
-//       maxTime[2] = 500;
-//       midTime[2] = 250;
-//   }
-//   if ( myData[4] > 100 ){
-//       incVals[2] = 4;
-//       maxTime[2] = 200;
-//       midTime[2] = 100;
-//   }
-//   
-}
-
-void updatePWM(){
-   for ( uint8_t i=0; i < 3; i++ ){
-      // update the faded value:
-      fadeVals[i] = fadeVals[i] + stepVals[i];
-      if ( fadeVals[i] < minVals[i] ){ // clip low
-	fadeVals[i] = minVals[i];
-	state[i] = atMin;
-      } else if ( fadeVals[i] > maxVals[i] ){ // clip high
-	fadeVals[i] = maxVals[i];
-	state[i] = atMax;
-      } else {
-	state[i] = fading;
-      }
-      // update the PWM value
-      pwmVals[i] = fadeVals[i];
-      if ( pwmVals[i] < onoffLimit ){ // clip on/off
-	pwmVals[i] = 0; 
-      }
-   }
 }
