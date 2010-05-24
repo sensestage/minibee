@@ -63,9 +63,9 @@ class MiniBee {
 		void setCustomPins( uint8_t * ids, uint8_t * sizes, uint8_t n ); // sets pins to custom configuration
 		void setCustomPin( uint8_t id, uint8_t size ); // sets a pin to custom configuration
 		void setCustomInput( uint8_t noInputs, uint8_t size );
-		void addCustomData( uint8_t * cdata );
-		void addCustomData( char * cdata );
-		void addCustomData( int * cdata );
+		void addCustomData( uint8_t * cdata, uint8_t n );
+		void addCustomData( char * cdata, uint8_t n );
+		void addCustomData( int * cdata, uint8_t n );
 		void setCustomCall( void (*customFunc)(char * ) );
 
 		void setDataCall( void (*dataFunc)(char * ) );

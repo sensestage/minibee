@@ -122,17 +122,7 @@ void MiniBee::begin(int baud_rate) {
 // }
 
 void MiniBee::doLoopStep(void){
-  // read any new data from XBee:
-  int bytestoread = Serial.available();
-  if ( bytestoread > 0 ){
-//         send( N_INFO, "reading" );
-	for ( i = 0; i < bytestoread; i++ ){
-		read();      
-	}
-//   } else {
-//       send( N_INFO, "no data" );
-  }
-  
+  int bytestoread;
   // do something based on current status:
   switch( status ){
     case SENSING:
@@ -164,6 +154,18 @@ void MiniBee::doLoopStep(void){
     case PAUSING:
       delay( 500 );
       break;
+  }
+  
+  // read any new data from XBee:
+  // do this at the end, so status change happens at the beginning of next loop
+  bytestoread = Serial.available();
+  if ( bytestoread > 0 ){
+//         send( N_INFO, "reading" );
+	for ( i = 0; i < bytestoread; i++ ){
+		read();      
+	}
+//   } else {
+//       send( N_INFO, "no data" );
   }
 }
 
@@ -197,27 +199,27 @@ void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
 //     send( N_INFO, info, 2 );
 }
 
-void MiniBee::addCustomData( uint8_t * cdata ){
+void MiniBee::addCustomData( uint8_t * cdata, uint8_t n ){
   if ( status == SENSING ){
-    for ( i=0; i<customDataSize; i++){
+    for ( i=0; i<n; i++){
       data[datacount] = (char) cdata[i];
       datacount++;  
     }
   }
 }
 
-void MiniBee::addCustomData( char * cdata ){
+void MiniBee::addCustomData( char * cdata, uint8_t n ){
   if ( status == SENSING ){
-    for ( i=0; i<customDataSize; i++){
+    for ( i=0; i<n; i++){
       data[datacount] = cdata[i];
       datacount++;  
     }
   }
 }
 
-void MiniBee::addCustomData( int * cdata ){
+void MiniBee::addCustomData( int * cdata, uint8_t n ){
   if ( status == SENSING ){
-    for ( i=0; i<(customDataSize/2); i++){
+    for ( i=0; i<n; i++){
       dataFromInt( cdata[i], datacount );
       datacount += 2;  
     }
