@@ -7,6 +7,14 @@
 
 MiniBee Bee = MiniBee();
 
+uint8_t myID = 1; // or 4
+
+char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
+  AnalogOut, Custom, AnalogOut, AnalogOut, SHTClock, SHTData, // D3 to D8
+  AnalogOut, AnalogOut, AnalogOut, NotUsed, NotUsed,  // D9,D10,D11,D12,D13
+  NotUsed, NotUsed, NotUsed, NotUsed, Custom, Custom, Custom, Custom // A0, A1, A2, A3, A4, A5, A6, A7
+};
+
 int capData[4];
 long capLong[4];
 uint8_t capPins[] = {18,19,20,21};
@@ -46,7 +54,11 @@ void customParser( char * msg ){
 
 
 void setup() {
-  Bee.begin(19200);
+  Bee.setRemoteConfig( false );
+  Bee.openSerial(19200);
+  Bee.configXBee();
+  Bee.setID( myID );
+//   Bee.begin(19200);
 
   // define which pins we will be using for our custom functionality:
   // arguments are: pin number, size of data they will produce (in bytes)
@@ -56,6 +68,8 @@ void setup() {
     
   Bee.setCustomPins( cpins, csizes, 5 );  
   Bee.setCustomCall( &customParser );
+  
+  Bee.readConfigMsg( myConfig );
 }
 
 

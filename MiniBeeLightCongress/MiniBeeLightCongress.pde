@@ -6,7 +6,7 @@ MiniBee Bee = MiniBee();
 char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
   AnalogOut, Custom, AnalogOut, AnalogOut, Custom, Custom, // D3 to D8
   NotUsed, NotUsed, NotUsed, NotUsed, NotUsed,  // D9,D10,D11,D12,D13
-  NotUsed, NotUsed, AnalogIn, AnalogIn, NotUsed, NotUsed, NotUsed, NotUsed // A0, A1, A2, A3, A4, A5, A6, A7
+  NotUsed, AnalogIn, AnalogIn, NotUsed, NotUsed, NotUsed, NotUsed, NotUsed // A0, A1, A2, A3, A4, A5, A6, A7
 };
 
 uint8_t myID = 0; // my id
@@ -15,13 +15,15 @@ char msgVals[9] = {0,0,0,0,0,0,255,255,255}; // the current pwm values
 
 char pwmVals[3] = {0,0,0}; // the current pwm values
 
+char holdVals[3] = {0,0,0}; // the current pwm values
+
 int maxVals[3] = { 255,255,255 };
 int minVals[3] = { 0,0,0 };
 
 uint8_t lids[] = {0,1,2};
 uint8_t old_lids[] = {0,1,2};
 
-char onoffLimit = 1;
+char onoffLimit = 5;
 
 int lightCum[2] = {0,0};
 int mainCnt = 0;
@@ -37,10 +39,19 @@ int timecounter[3] = {0,0,0};
 int maxTime[3] = { 1000, 300, 100 };
 int midTime[3] = {  500, 150,  50 };
 
+// int fadeDist = 147;
+
+int blackCnt = 0;
+int holdCnt = 0;
+char mainState;
+
 enum LightState {
   fading,
   atMin,
-  atMax
+  atMax,
+  black1,
+  hold,
+  black2
 };
 
 
@@ -62,7 +73,7 @@ void dataMsgParser( char * msg ){
     otherThere[msgSrc] = true;
     lastOther = msgSrc;
     // copy the data to the array with "other data"
-    for ( uint8_t j=0; j<5; j++ ){
+    for ( uint8_t j=0; j<9; j++ ){
       otherData[ msgSrc*11 + j ] = msg[ j+2 ];
     }
   }
@@ -72,6 +83,8 @@ void setup() {
   Bee.setRemoteConfig( false );
   Bee.openSerial(19200);
   Bee.configXBee();
+  
+  mainState = fading;
   
   uint8_t cpins []  = {4,7,8};
   uint8_t csizes [] = {0,0,0};
@@ -90,7 +103,7 @@ void setup() {
   Bee.setID( myID );
   
   /// allocate an array for the data from up to 8 other nodes:
-  otherData = (uint8_t *)malloc(sizeof(uint8_t)* 11*8) ;
+  otherData = (uint8_t *)malloc(sizeof(uint8_t)* 5 * 8) ;
 
   /// setting our own data parser to receive data from other nodes:
   Bee.setDataCall( dataMsgParser );
@@ -100,38 +113,25 @@ void setup() {
 
 void mimicBee( uint8_t bid ){
     if ( otherThere[bid] ){
-      for ( uint8_t i=0; i < 3; i++ ){
-	pwmVals[i] = 0;
-      }
-      Bee.setOutputValues( pwmVals, 0 );
-      Bee.setOutput();
-      delay(300);
-      
-      
+	mainState = black1;
 	for ( uint8_t i=0; i < 3; i++ ){
-	  pwmVals[i] = otherData[ bid*11 + 2 + i ];
+	  holdVals[i] = otherData[ bid * 5 + 2 + i ];
 	}
-
-      Bee.setOutputValues( pwmVals, 0 );
-      Bee.setOutput();
-      delay(3000);
-
-      for ( uint8_t i=0; i < 3; i++ ){
-	pwmVals[i] = 0;
-      }
-      Bee.setOutputValues( pwmVals, 0 );
-      Bee.setOutput();
-      delay(300);
+    } else {
+	mainState = fading;
     }
 }
 
 int clip( int in, int min, int max ){
-  if ( in < min ){
-    in = min;
-  } else if ( in > max ){
-    in = max;
+  int out;
+  out = in;
+  if ( out < min ){
+    out = min;
   }
-  return in;
+  if ( out > max ){
+    out = max;
+  }
+  return out;
 }
 
 void loop() {
@@ -140,94 +140,121 @@ void loop() {
 
   for ( uint8_t i=0; i < 3; i++ ){
     msgVals[i]   = pwmVals[i];
-    msgVals[i+3] = minVals[i];
-    msgVals[i+6] = maxVals[i];
+//     msgVals[i+3] = minVals[i];
+//     msgVals[i+6] = maxVals[i];
   }
   
-  Bee.addCustomData( msgVals, 9 );
+  Bee.addCustomData( msgVals, 3 );
 
   /// this does the sensing, and the serial receiving, and the N ms waiting
   Bee.doLoopStep();
 
   myData = Bee.getData();
 
-  msgCnt++;
+  switch( mainState ){
+    case black1:
+      blackCnt++;
+      if ( blackCnt > 10 ){
+	mainState = hold;
+	blackCnt = 0;
+      }
+      for ( uint8_t i=0; i < 3; i++ ){
+	pwmVals[i] = 0;
+      }
+      break;
+    case black2:
+      blackCnt++;
+      if ( blackCnt > 10 ){
+	mainState = fading;
+	blackCnt = 0;
+      }
+      for ( uint8_t i=0; i < 3; i++ ){
+	pwmVals[i] = 0;
+      }
+      break;
+    case hold:  
+      holdCnt++;
+      if ( holdCnt > 100 ){
+	mainState = black2;
+	holdCnt = 0;
+      }
+      for ( uint8_t i=0; i < 3; i++ ){
+	pwmVals[i] = holdVals[i];
+      }      
+    case fading:
+      msgCnt++;
+      if ( msgCnt > (40*20 + myData[0] + myData[1] ) ){
+	mimicBee( lastOther );
+	msgCnt = 0;
+	// to add, get closer to their min/max values
+      }
 
-  if ( msgCnt > (10*20 + myData[0] + myData[1] ) ){
-    mimicBee( lastOther );
-    msgCnt = 0;
-    // to add, get closer to their min/max values
+      for ( uint8_t i=0; i < 2; i++ ){
+	lightCum[i] = (lightCum[i] + myData[i])/2;
+      }
+
+      mainCnt++;
+      
+      /*
+      if ( mainCnt%100 == 0 ){
+	lightCumSum = lightCum[0] + lightCum[1];
+	if ( lightCumSum < 30 ){ // dark
+	    for ( uint8_t i=0; i < 3; i++ ){
+	      minVals[i]++; 
+	      maxVals[i]++;
+	      minVals[i] = clip( minVals[i], 0, maxVals[i]-fadeDist );
+	      maxVals[i] = clip( maxVals[i], minVals[i]+fadeDist, 511 );
+	    }
+	}
+	if ( lightCumSum > 400 ){ // very bright
+	    for ( uint8_t i=0; i < 3; i++ ){
+	      minVals[i]--; 
+	      maxVals[i]--;
+	      minVals[i] = clip( minVals[i], 0, maxVals[i]-fadeDist );
+	      maxVals[i] = clip( maxVals[i], minVals[i]+fadeDist, 511 );
+	    }
+	}
+      }
+      */
+
+      fadeSum = fadeVals[0] + fadeVals[1] + fadeVals[2];
+      if ( ( (fadeSum > 1200) || (fadeSum < 60) ) && (mainCnt > 300) ){
+	for ( uint8_t i=0; i < 3; i++ ){
+	  old_lids[i] = lids[i];
+	}
+	if ( lightCum[1] - lightCum[0] > 0 ){
+	  lids[0] = old_lids[1];
+	  lids[1] = old_lids[2];
+	  lids[2] = old_lids[0];
+	} else {
+	  lids[0] = old_lids[2];
+	  lids[1] = old_lids[0];
+	  lids[2] = old_lids[1];
+	}
+	mainCnt = 0;
+	lightCum[0] = 0; lightCum[1] = 0;
+      }
+
+      for ( uint8_t i=0; i < 3; i++ ){
+	timecounter[i]++;
+	if ( timecounter[i] == 1 ){
+	  fadeStep[i] = fadeInc[i];
+	} else if ( timecounter[i] == midTime[i] ){
+	  fadeStep[i] = -1*fadeInc[i];
+	} else if ( timecounter[i] > maxTime[i] ){
+	  timecounter[i] = 0;
+	}
+	fadeVals[i] = fadeVals[i] + fadeStep[i];
+	fadeVals[i] = clip( fadeVals[i], 0, 511);
+	// update the PWM value
+	pwmVals[i] = fadeVals[i]/2;
+// 	if ( pwmVals[i] < onoffLimit ){
+// 	    pwmVals[i] = 0;
+// 	}
+      }
+      break;
   }
-
-  for ( uint8_t i=0; i < 2; i++ ){
-    lightCum[i] = (lightCum[i] + myData[i])/2;
-  }
-
-  mainCnt++;
   
-  if ( mainCnt%100 == 0 ){
-    lightCumSum = lightCum[0] + lightCum[1];
-    if ( lightCumSum < 30 ){ // dark
-        for ( uint8_t i=0; i < 3; i++ ){
-	  minVals[i]++; 
-	  maxVals[i]++;
-	  minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
-	  maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
-	}
-    }
-    if ( lightCumSum > 400 ){ // very bright
-        for ( uint8_t i=0; i < 3; i++ ){
-	  minVals[i]--; 
-	  maxVals[i]--;
-	  minVals[i] = clip( minVals[i], 0, maxVals[i]-50 );
-	  maxVals[i] = clip( maxVals[i], minVals[i]+50, 511 );
-	}
-    }
-  }
-
-  fadeSum = fadeVals[0] + fadeVals[1] + fadeVals[2];
-  if ( ( (fadeSum > 1200) || (fadeSum < 60) ) && (mainCnt > 300) ){
-    for ( uint8_t i=0; i < 3; i++ ){
-      old_lids[i] = lids[i];
-    }
-    if ( lightCum[1] - lightCum[0] > 0 ){
-      lids[0] = old_lids[1];
-      lids[1] = old_lids[2];
-      lids[2] = old_lids[0];
-    } else {
-      lids[0] = old_lids[2];
-      lids[1] = old_lids[0];
-      lids[2] = old_lids[1];
-    }
-    mainCnt = 0;
-    lightCum[0] = 0; lightCum[1] = 0;
-  }
-
-  for ( uint8_t i=0; i < 3; i++ ){
-     timecounter[i]++;
-     if ( timecounter[i] == 1 ){
-       fadeStep[i] = fadeInc[i];
-     } else if ( timecounter[i] == midTime[i] ){
-       fadeStep[i] = -1*fadeInc[i];
-     } else if ( timecounter[i] > maxTime[i] ){
-       timecounter[i] = 0;
-     }
-     fadeVals[i] = fadeVals[i] + fadeStep[i];
-     if ( fadeVals[i] < minVals[i] ){ // clip low
-       fadeVals[i] = minVals[i];
-       state[i] = atMin;
-     }{ 
-       if ( fadeVals[i] > maxVals[i] ){ // clip high
-	 fadeVals[i] = maxVals[i];
-	 state[i] = atMax;
-       }{
-	 state[i] = fading;
-       }
-     }
-     // update the PWM value
-     pwmVals[i] = fadeVals[i]/2;
-  }
-
   Bee.setOutputValues( pwmVals, 0 );
   Bee.setOutput();
 }

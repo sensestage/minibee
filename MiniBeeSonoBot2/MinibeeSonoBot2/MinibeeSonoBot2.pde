@@ -1,7 +1,15 @@
 
 #include <MiniBee.h>
 
+uint8_t myID = 3; // or 3
+
 MiniBee Bee = MiniBee();
+
+char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
+  AnalogOut, Custom, AnalogOut, AnalogOut, Custom, Custom, // D3 to D8
+  AnalogOut, AnalogOut, AnalogOut, Custom, Custom,  // D9,D10,D11,D12,D13
+  Custom, Custom, Custom, Custom, Custom, Custom, Custom, Custom // A0, A1, A2, A3, A4, A5, A6, A7
+};
 
 /// multiplexing with 2 CD4052's to get 16 light inputs from 4 analog inputs
 /// D12, D13    - controlling multiplexer
@@ -72,6 +80,11 @@ void setMultiplexer( byte value ){
 
 
 void setup() {
+  Bee.setRemoteConfig( false );
+  Bee.openSerial(19200);
+  Bee.configXBee();
+  Bee.setID( myID );
+
   // define which pins we will be using for our custom functionality:
   // arguments are: pin number, size of data they will produce (in bytes)
     // speaker select (3), light sensing (6), motor control (4)
@@ -92,7 +105,9 @@ void setup() {
     pinMode( mpins[i], OUTPUT );
   }
   
-  Bee.begin(19200);
+  Bee.readConfigMsg( myConfig );
+
+//   Bee.begin(19200);
 }
 
 uint8_t cnt=0;
@@ -103,7 +118,7 @@ void loop() {
     digitalWrite( 12, i );
     for ( uint8_t j=0; j<2; j++ ){
       digitalWrite( 13, i );
-      for ( uint8_t k=0; k<2; k++ ){
+      for ( uint8_t k=0; k<4; k++ ){
 	lights[cnt] = (uint8_t) (analogRead( k )/4);
 	cnt++;
       }
