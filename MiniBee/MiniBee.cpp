@@ -872,7 +872,7 @@ void MiniBee::parseConfig(void){
 	configInfo[5] = datasize;
 	configInfo[6] = datasizeout;
 	configInfo[7] = customInputs;
-	configInfo[8] = customSize;
+	configInfo[8] = customDataSize;
 	for ( i=0; i<19; i++){
 	  if ( custom_pin[i] ){
 	    configInfo[confSize] = i;

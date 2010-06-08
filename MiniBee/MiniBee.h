@@ -5,9 +5,9 @@
 #define MINIBEE_LIBVERSION 1
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 0  /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_TWI 1  /// TWI takes up 2064 bytes
 #define MINIBEE_ENABLE_SHT 1  /// SHT takes up 1140 bytes
-#define MINIBEE_ENABLE_PING 0 /// Ping takes up 440 bytes
+#define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
 
 // #include <avr/interrupt.h>
 #include <avr/eeprom.h>
@@ -314,7 +314,7 @@ class MiniBee {
 	bool hasCustom; // = false;
 
 	uint8_t customInputs;
-	uint8_t customSize;
+// 	uint8_t customSize;
 
 // 	//listener functions
 // 		void digitalUpdate(int pin, int status);	//function used to update digitalEvent
