@@ -5,7 +5,7 @@
 #define MINIBEE_LIBVERSION 1
 
 /// all together: 3644 bytes
-#define MINIBEE_ENABLE_TWI 1  /// TWI takes up 2064 bytes
+#define MINIBEE_ENABLE_TWI 1  /// TWI/I2C takes up 2064 bytes
 #define MINIBEE_ENABLE_SHT 1  /// SHT takes up 1140 bytes
 #define MINIBEE_ENABLE_PING 1 /// Ping takes up 440 bytes
 
