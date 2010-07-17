@@ -185,7 +185,7 @@ void MiniBee::setCustomInput( uint8_t noInputs, uint8_t size ){
 }
 
 void MiniBee::setCustomPin( uint8_t id, uint8_t size ){
-  if ( id > PINOFFSET ){
+  if ( id >= PINOFFSET ){
     custom_pin[id-PINOFFSET] = true;
     custom_size[id-PINOFFSET] = size;
   } // id's smaller than PINOFFSET allow for custom data without pin associated
