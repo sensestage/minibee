@@ -5,10 +5,6 @@
 /// out of RAM.
 #include <MiniBee.h>
 
-/// in our example we are using the capacitive sensing library to use sensors
-/// not supported by default in our library
-#include <CapSense.h>
-
 MiniBee Bee = MiniBee();
 
   int xclr=8;
