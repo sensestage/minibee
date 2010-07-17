@@ -1,0 +1,23 @@
+What's what in here:
+
+Of main importance:
+
+MiniBee   -> contains the MiniBee library, including simple examples
+schematic -> contains the schematic and board design of both revA and revB
+doc       -> documentation of the firmware library
+
+Less important:
+FirmwareRefTemplate -> reference file from which the MiniBee lib was made
+
+More examples:
+
+Various projects (some of these may have been made with previous library versions, so may need fixing).
+
+MiniBeeHDMP01 -> using the HopeRF HDMP01 compass,pressure,temperature sensor
+MiniBeeLightCongress -> created for the beacons on the congress
+MiniBeeSonoBot1 -> sonobotanics version 1
+MiniBeeSonoBot2 -> sonobotanics version 2
+MiniBeeSonoBotCapMC -> sonobotanics version, with multichannel capacitive sensing
+MiniBeeFirmware -> old default example
+MiniBeeFirmwareCap -> old default example
+MiniBeeFirmwareMotor -> old default example
