@@ -1,0 +1,42 @@
+##############################################################
+
+minibee.name=Sense Stage MiniBee (3.3V, 12 MHz) w/ ATmega328
+
+minibee.upload.protocol= stk500
+minibee.upload.maximum_size=30720
+minibee.upload.speed=57600
+
+minibee.bootloader.low_fuses=0xFF
+minibee.bootloader.high_fuses=0xDA
+minibee.bootloader.extended_fuses=0x05
+minibee.bootloader.path=minibee
+minibee.bootloader.file=ATmegaBOOT_168_minibee_12MHz.hex
+minibee.bootloader.unlock_bits=0x3F
+minibee.bootloader.lock_bits=0x0F
+
+minibee.build.mcu=atmega328p
+minibee.build.f_cpu=12000000L
+minibee.build.core=minibee
+
+##############################################################
+
+mini.name=Sense Stage MiniBee (3.3V, 8 MHz) w/ ATmega168
+
+mini.upload.protocol=stk500
+mini.upload.maximum_size=14336
+mini.upload.speed=19200
+
+mini.bootloader.low_fuses=0xe2
+mini.bootloader.high_fuses=0xdd
+mini.bootloader.extended_fuses=0x00
+mini.bootloader.path=minibee
+mini.bootloader.file=ATmegaBOOT_168_minibee_8MHz.hex
+mini.bootloader.unlock_bits=0x3F
+mini.bootloader.lock_bits=0x0F
+
+mini.build.mcu=atmega168
+mini.build.f_cpu=8000000L
+mini.build.core=minibee
+
+##############################################################
+
