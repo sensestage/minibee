@@ -1,8 +1,8 @@
 #ifndef MiniBee_h
 #define MiniBee_h
 
-#define MINIBEE_REVISION 'A'
-#define MINIBEE_LIBVERSION 1
+#define MINIBEE_REVISION 'B'
+#define MINIBEE_LIBVERSION 2
 
 /// all together: 3644 bytes
 #define MINIBEE_ENABLE_TWI 1  /// TWI/I2C takes up 2064 bytes
@@ -286,7 +286,7 @@ class MiniBee {
 
 #if MINIBEE_ENABLE_TWI == 1
 	// LIS302DL accelerometer addresses
-		#define accel1Address 0x1C
+		#define accel1Address 0x1D
 		#define accelResultX 0x29
 		#define accelResultY 0x2B
 		#define accelResultZ 0x2D
