@@ -286,7 +286,7 @@ class MiniBee {
 
 #if MINIBEE_ENABLE_TWI == 1
 	// LIS302DL accelerometer addresses
-		#define accel1Address 0x1C
+		#define accel1Address 0x1D
 		#define accelResultX 0x29
 		#define accelResultY 0x2B
 		#define accelResultZ 0x2D
