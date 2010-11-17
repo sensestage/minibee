@@ -285,11 +285,11 @@ class MiniBee {
 		#define ANAOFFSET 11
 
 #if MINIBEE_ENABLE_TWI == 1
-	// LIS302DL accelerometer addresses
-		#define accel1Address 0x1D
-		#define accelResultX 0x29
-		#define accelResultY 0x2B
-		#define accelResultZ 0x2D
+	// ADXL345 accelerometer addresses
+		#define accel1Address 0x53
+		#define accelResultX 0x32
+		#define accelResultY 0x34
+		#define accelResultZ 0x36
 #endif
 
 #if MINIBEE_ENABLE_SHT == 1

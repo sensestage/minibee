@@ -899,6 +899,30 @@ void MiniBee::setupAccelleroTWI(void) {
 //   Wire.begin();
   setupTWI();
 
+//------- ADXL345 setup --------------
+  Wire.beginTransmission(accel1Address);
+  Wire.send(0x2D); // POWER_CTL
+  Wire.send(0x08); // measure
+  Wire.endTransmission();
+
+  Wire.beginTransmission(accel1Address);
+  Wire.send(0x2C); // BW_RATE
+  Wire.send(0x0A); // regular power, 100 Hz
+  Wire.endTransmission();
+
+  Wire.beginTransmission(accel1Address);
+  Wire.send(0x31); // Data format
+  Wire.send(0x04); // full res. off, left justify (MSB), range 2g
+  Wire.endTransmission();
+
+  Wire.beginTransmission(accel1Address);
+  Wire.send(0x38); // FIFO_CTL
+  Wire.send(0x00); // bypass FIFO
+  Wire.endTransmission();
+
+//------- end of ADXL345 setup --------------
+  
+/*
 //------- LIS302DL setup --------------
   Wire.beginTransmission(accel1Address);
   Wire.send(0x21); // CTRL_REG2 (21h)
@@ -927,8 +951,8 @@ void MiniBee::setupAccelleroTWI(void) {
   	//z enable
   	//y enable
   	//x enable 
-
 //-------end LIS302DL setup --------------
+*/
 }
 
 /// reading LIS302DL
