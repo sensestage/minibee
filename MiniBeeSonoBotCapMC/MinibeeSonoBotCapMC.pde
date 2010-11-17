@@ -8,9 +8,10 @@
 
 int capData[1];
 long capLong[1];
-// uint8_t capPins[] = {17,18,19,20};
-uint8_t capPins[] = {11};
-CapSenseMC   cSense = CapSenseMC(10,capPins,1); 
+//uint8_t capPins[] = {17,18,19,20};
+uint8_t capPins[] = {14,15,16,17};
+//uint8_t capPins[] = {11};
+CapSenseMC   cSense = CapSenseMC(4,capPins,1); 
 int capSamples = 30;
  
 // this will be our parser for the custom messages we will send:
@@ -70,8 +71,8 @@ void setup() {
   // arguments are: pin number, size of data they will produce (in bytes)
 //   uint8_t cpins [] = {11,17,18,19,20, 6,7,8, 3,4,5};
 //   uint8_t csizes [] = {0,2,2,2,2, 0,0,0, 0,0,0};
-  uint8_t cpins [] = {10,11};
-  uint8_t csizes [] = {0,2};
+  uint8_t cpins [] = {14,15,16,17,4};
+  uint8_t csizes [] = {2,2,2,2,0};
   // capacitive sensing
 /*  Bee.setCustomPin( 4, 0 );
   Bee.setCustomPin( 10, 2 );
@@ -85,7 +86,7 @@ void setup() {
 //   Bee.setCustomPin( 7, 0 );
 //   Bee.setCustomPin( 8, 0 );
   
-  Bee.setCustomPins( cpins, csizes, 8 );
+  Bee.setCustomPins( cpins, csizes, 5 );
   
 //   maxSetup();
 
@@ -156,68 +157,68 @@ function maxInUse  keeps track of this, just tell it how many max7219 you are
 using.
 */
 
-char maxDataIn = 8;
-char maxLoad = 7;
-char maxClock = 6;
-
-char e = 0;           // just a varialble
-                     // define max7219 registers
-byte max7219_reg_noop        = 0x00;
-/*byte max7219_reg_digit0      = 0x01;
-byte max7219_reg_digit1      = 0x02;
-byte max7219_reg_digit2      = 0x03;
-byte max7219_reg_digit3      = 0x04;
-byte max7219_reg_digit4      = 0x05;
-byte max7219_reg_digit5      = 0x06;
-byte max7219_reg_digit6      = 0x07;
-byte max7219_reg_digit7      = 0x08;*/
-byte max7219_reg_decodeMode  = 0x09;
-byte max7219_reg_intensity   = 0x0a;
-byte max7219_reg_scanLimit   = 0x0b;
-byte max7219_reg_shutdown    = 0x0c;
-byte max7219_reg_displayTest = 0x0f;
-
-void maxPutByte(byte data) {
-  byte i = 8;
-  byte mask;
-  while(i > 0) {
-    mask = 0x01 << (i - 1);      // get bitmask
-    digitalWrite( maxClock, LOW);   // tick
-    if (data & mask){            // choose bit
-      digitalWrite( maxDataIn, HIGH);// send 1
-    }else{
-      digitalWrite( maxDataIn, LOW); // send 0
-    }
-    digitalWrite( maxClock, HIGH);   // tock
-    --i;                         // move to lesser bit
-  }
-}
-
-void maxSingle( byte reg, byte col) {    
-//maxSingle is the "easy"  function to use for a     //single max7219
-  digitalWrite(maxLoad, LOW);       // begin     
-  maxPutByte(reg);                  // specify register
-  maxPutByte(col);//((data & 0x01) * 256) + data >> 1); // put data   
-  digitalWrite(maxLoad, LOW);       // and load da shit
-  digitalWrite(maxLoad,HIGH); 
-}
-
-void maxIntensity( byte intens ){
-  maxSingle(max7219_reg_intensity, intens & 0x0f);    // the first 0x0f is the value you can set  
-}
-
-void maxSetup(){
-  pinMode(maxDataIn, OUTPUT);
-  pinMode(maxClock,  OUTPUT);
-  pinMode(maxLoad,   OUTPUT);
-
-//initiation of the max 7219
-  maxSingle(max7219_reg_scanLimit, 0x07);      
-  maxSingle(max7219_reg_decodeMode, 0x00);  // using an led matrix (not digits)
-  maxSingle(max7219_reg_shutdown, 0x01);    // not in shutdown mode
-  maxSingle(max7219_reg_displayTest, 0x00); // no display test
-   for (e=1; e<=8; e++) {    // empty registers, turn all LEDs off 
-    maxSingle(e,0);
-  }
-  maxSingle(max7219_reg_intensity, 0x0f & 0x0f);    // the first 0x0f is the value you can set
-}
+// char maxDataIn = 8;
+// char maxLoad = 7;
+// char maxClock = 6;
+// 
+// char e = 0;           // just a varialble
+//                      // define max7219 registers
+// byte max7219_reg_noop        = 0x00;
+// /*byte max7219_reg_digit0      = 0x01;
+// byte max7219_reg_digit1      = 0x02;
+// byte max7219_reg_digit2      = 0x03;
+// byte max7219_reg_digit3      = 0x04;
+// byte max7219_reg_digit4      = 0x05;
+// byte max7219_reg_digit5      = 0x06;
+// byte max7219_reg_digit6      = 0x07;
+// byte max7219_reg_digit7      = 0x08;*/
+// byte max7219_reg_decodeMode  = 0x09;
+// byte max7219_reg_intensity   = 0x0a;
+// byte max7219_reg_scanLimit   = 0x0b;
+// byte max7219_reg_shutdown    = 0x0c;
+// byte max7219_reg_displayTest = 0x0f;
+// 
+// void maxPutByte(byte data) {
+//   byte i = 8;
+//   byte mask;
+//   while(i > 0) {
+//     mask = 0x01 << (i - 1);      // get bitmask
+//     digitalWrite( maxClock, LOW);   // tick
+//     if (data & mask){            // choose bit
+//       digitalWrite( maxDataIn, HIGH);// send 1
+//     }else{
+//       digitalWrite( maxDataIn, LOW); // send 0
+//     }
+//     digitalWrite( maxClock, HIGH);   // tock
+//     --i;                         // move to lesser bit
+//   }
+// }
+// 
+// void maxSingle( byte reg, byte col) {    
+// //maxSingle is the "easy"  function to use for a     //single max7219
+//   digitalWrite(maxLoad, LOW);       // begin     
+//   maxPutByte(reg);                  // specify register
+//   maxPutByte(col);//((data & 0x01) * 256) + data >> 1); // put data   
+//   digitalWrite(maxLoad, LOW);       // and load da shit
+//   digitalWrite(maxLoad,HIGH); 
+// }
+// 
+// void maxIntensity( byte intens ){
+//   maxSingle(max7219_reg_intensity, intens & 0x0f);    // the first 0x0f is the value you can set  
+// }
+// 
+// void maxSetup(){
+//   pinMode(maxDataIn, OUTPUT);
+//   pinMode(maxClock,  OUTPUT);
+//   pinMode(maxLoad,   OUTPUT);
+// 
+// //initiation of the max 7219
+//   maxSingle(max7219_reg_scanLimit, 0x07);      
+//   maxSingle(max7219_reg_decodeMode, 0x00);  // using an led matrix (not digits)
+//   maxSingle(max7219_reg_shutdown, 0x01);    // not in shutdown mode
+//   maxSingle(max7219_reg_displayTest, 0x00); // no display test
+//    for (e=1; e<=8; e++) {    // empty registers, turn all LEDs off 
+//     maxSingle(e,0);
+//   }
+//   maxSingle(max7219_reg_intensity, 0x0f & 0x0f);    // the first 0x0f is the value you can set
+// }

@@ -1,11 +1,11 @@
 
 #include <MiniBee.h>
 
-uint8_t myID = 3; // or 3
+uint8_t myID = 2; // 2 or 3
 
 MiniBee Bee = MiniBee();
 
-char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
+char myConfig[] = { 0, 2, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
   AnalogOut, Custom, AnalogOut, AnalogOut, Custom, Custom, // D3 to D8
   AnalogOut, AnalogOut, AnalogOut, Custom, Custom,  // D9,D10,D11,D12,D13
   Custom, Custom, Custom, Custom, Custom, Custom, Custom, Custom // A0, A1, A2, A3, A4, A5, A6, A7
@@ -115,9 +115,9 @@ uint8_t cnt=0;
 void loop() {
   cnt = 0;
   for ( uint8_t i=0; i<2; i++ ){
-    digitalWrite( 12, i );
+    digitalWrite( 12, i ); // high bit, 0 then 1
     for ( uint8_t j=0; j<2; j++ ){
-      digitalWrite( 13, i );
+      digitalWrite( 13, j ); // low bit, 0 then 1
       for ( uint8_t k=0; k<4; k++ ){
 	lights[cnt] = (uint8_t) (analogRead( k )/4);
 	cnt++;

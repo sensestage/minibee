@@ -7,9 +7,9 @@
 
 MiniBee Bee = MiniBee();
 
-uint8_t myID = 1; // or 4
+uint8_t myID = 4; // 1 or 4
 
-char myConfig[] = { 0, 1, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
+char myConfig[] = { 0, 3, 0, 50, 1, // null, config id, msgInt high byte, msgInt low byte, samples per message
   AnalogOut, Custom, AnalogOut, AnalogOut, SHTClock, SHTData, // D3 to D8
   AnalogOut, AnalogOut, AnalogOut, NotUsed, NotUsed,  // D9,D10,D11,D12,D13
   NotUsed, NotUsed, NotUsed, NotUsed, Custom, Custom, Custom, Custom // A0, A1, A2, A3, A4, A5, A6, A7
